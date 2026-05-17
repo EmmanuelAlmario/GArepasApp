@@ -1,0 +1,101 @@
+package com.garepas.garepasapp.service;
+
+import com.garepas.garepasapp.dto.request.VentaRequest;
+import com.garepas.garepasapp.dto.response.VentaResponse;
+import com.garepas.garepasapp.entity.DetalleVenta;
+import com.garepas.garepasapp.entity.Producto;
+import com.garepas.garepasapp.entity.Venta;
+import com.garepas.garepasapp.exception.OperacionInvalidaException;
+import com.garepas.garepasapp.exception.RecursoNoEncontradoException;
+import com.garepas.garepasapp.repository.ProductoRepository;
+import com.garepas.garepasapp.repository.VentaRepository;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.List;
+
+@Service
+@RequiredArgsConstructor
+public class VentaService {
+
+    private final VentaRepository ventaRepository;
+    private final ProductoRepository productoRepository;
+
+    @Transactional(readOnly = true)
+    public List<VentaResponse> listarTodas() {
+        return ventaRepository.findAll()
+                .stream()
+                .map(VentaResponse::desde)
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public VentaResponse buscarPorId(Long id) {
+        return ventaRepository.findById(id)
+                .map(VentaResponse::desde)
+                .orElseThrow(() -> new RecursoNoEncontradoException("Venta", id));
+    }
+
+    @Transactional
+    public VentaResponse registrar(VentaRequest request) {
+        Venta venta = Venta.builder()
+                .fecha(LocalDateTime.now())
+                .total(BigDecimal.ZERO)
+                .build();
+
+        List<DetalleVenta> detalles = request.detalles().stream()
+                .map(detalleRequest -> {
+                    Producto producto = productoRepository.findById(detalleRequest.productoId())
+                            .orElseThrow(() -> new RecursoNoEncontradoException("Producto", detalleRequest.productoId()));
+
+                    if (!producto.getActivo()) {
+                        throw new OperacionInvalidaException("El producto '" + producto.getNombre() + "' no está activo");
+                    }
+
+                    if (producto.getStockActual() < detalleRequest.cantidad()) {
+                        throw new OperacionInvalidaException("Stock insuficiente para el producto '" + producto.getNombre() +
+                                "'. Disponible: " + producto.getStockActual() + ", Solicitado: " + detalleRequest.cantidad());
+                    }
+
+                    BigDecimal subtotal = detalleRequest.precioUnitario()
+                            .multiply(BigDecimal.valueOf(detalleRequest.cantidad()));
+
+                    producto.setStockActual(producto.getStockActual() - detalleRequest.cantidad());
+                    productoRepository.save(producto);
+
+                    return DetalleVenta.builder()
+                            .venta(venta)
+                            .producto(producto)
+                            .cantidad(detalleRequest.cantidad())
+                            .precioUnitario(detalleRequest.precioUnitario())
+                            .subtotal(subtotal)
+                            .build();
+                })
+                .toList();
+
+        BigDecimal total = detalles.stream()
+                .map(DetalleVenta::getSubtotal)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        venta.setTotal(total);
+        venta.setDetalles(detalles);
+        return VentaResponse.desde(ventaRepository.save(venta));
+    }
+
+    @Transactional
+    public void eliminar(Long id) {
+        Venta venta = ventaRepository.findById(id)
+                .orElseThrow(() -> new RecursoNoEncontradoException("Venta", id));
+
+        venta.getDetalles().forEach(detalle -> {
+            Producto producto = detalle.getProducto();
+            producto.setStockActual(producto.getStockActual() + detalle.getCantidad());
+            productoRepository.save(producto);
+        });
+
+        ventaRepository.deleteById(id);
+    }
+}
