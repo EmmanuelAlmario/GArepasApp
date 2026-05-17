@@ -1,6 +1,6 @@
 package com.garepas.garepasapp.dto.request;
 
-import com.garepas.garepasapp.entity.UnidadMedida;
+import com.garepas.garepasapp.enums.UnidadMedida;
 import jakarta.validation.constraints.*;
 import java.math.BigDecimal;
 
