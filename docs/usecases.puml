@@ -1,0 +1,92 @@
+@startuml
+left to right direction
+
+actor Administrador as AD
+actor Sistema as S
+
+package GArepasApp {
+    package Dashboard {
+        usecase "Ver tabla de rentabilidad del negocio" as UC1
+        usecase "Ver rendimiento mensual del negocio en graficos" as UC2
+    }
+
+    package Inventario {
+        package Insumos {
+            usecase "Agregar insumo" as UC3
+            usecase "Modificar insumo" as UC4
+            usecase "Eliminar insumo" as UC5
+            usecase "Ver tabla de insumos" as UC6
+        }
+
+        package Productos {
+            usecase "Agregar producto" as UC7
+            usecase "Modificar producto" as UC8
+            usecase "Eliminar producto" as UC9
+            usecase "Ver tabla de productos" as UC10
+        }
+    }
+
+    package Finanzas {
+        package Ventas {
+            usecase "Registrar venta" as UC11
+            usecase "Modificar venta" as UC12
+            usecase "Eliminar venta" as UC13
+            usecase "Ver tabla de ventas" as UC14
+        }
+
+        package Gastos {
+            usecase "Registrar gasto" as UC15
+            usecase "Modificar gasto" as UC16
+            usecase "Eliminar gasto" as UC17
+            usecase "Ver tabla de gastos" as UC18
+        }
+
+    }
+
+    package Producción {
+        package Producciones {
+            usecase "Registrar producción" as UC19
+            usecase "Modificar producción" as UC20
+            usecase "Eliminar producción" as UC21
+            usecase "Ver tabla de producciones" as UC22
+        }
+    }
+        package CalcularProducciones {
+            usecase "Calcular insumos para producción" as UC23
+            usecase "Alertar si faltan insumos" as UC24
+        }
+    }
+
+    package Nomina {
+        usecase "Registrar empleado" as UC25
+        usecase "Modificar la deuda al empleado" as UC26
+    }
+}
+
+AD --> UC1
+AD --> UC2
+AD --> UC3
+AD --> UC4
+AD --> UC5
+AD --> UC6
+AD --> UC7
+AD --> UC8
+AD --> UC9
+AD --> UC10
+AD --> UC11
+AD --> UC12
+AD --> UC13
+AD --> UC14
+AD --> UC15
+AD --> UC16
+AD --> UC18
+AD --> UC19
+AD --> UC21
+AD --> UC22
+
+S --> UC20
+
+
+
+
+@enduml

@@ -1,0 +1,146 @@
+@startuml
+skinparam classAttributeIconSize 0
+skinparam classFontSize 13
+skinparam defaultFontSize 12
+
+enum UnidadMedida {
+  GRAMO
+  KILOGRAMO
+  MILILITRO
+  LITRO
+  UNIDAD
+  CUCHARADA
+  TAZA
+}
+
+class Insumo {
+  - id: Long
+  - nombre: String
+  - categoria: String
+  - marca: String
+  - stockActual: BigDecimal
+  - precioPorGramo: BigDecimal
+  - unidadMedida: UnidadMedida
+  - activo: Boolean
+  --
+  + actualizarStock(cantidad: BigDecimal): void
+  + esSuficiente(cantidadRequerida: BigDecimal): Boolean
+}
+
+class Receta {
+  - id: Long
+  - nombre: String
+  - descripcion: String
+  - detalles: List~DetalleReceta~
+  --
+  + calcularInsumos(cantidad: Integer): List~DetalleReceta~
+  + getCosto(): BigDecimal
+}
+
+class DetalleReceta {
+  - id: Long
+  - receta: Receta
+  - insumo: Insumo
+  - cantidad: BigDecimal
+  - unidadMedida: UnidadMedida
+  --
+  + getCantidadTotal(unidades: Integer): BigDecimal
+}
+
+class Producto {
+  - id: Long
+  - receta: Receta
+  - nombre: String
+  - stockActual: Integer
+  - precioVenta: BigDecimal
+  - activo: Boolean
+  --
+  + actualizarStock(cantidad: Integer): void
+  + getCostoProduccion(): BigDecimal
+}
+
+class Venta {
+  - id: Long
+  - fecha: LocalDateTime
+  - total: BigDecimal
+  - detalles: List~DetalleVenta~
+  --
+  + calcularTotal(): BigDecimal
+}
+
+class DetalleVenta {
+  - id: Long
+  - venta: Venta
+  - producto: Producto
+  - cantidad: Integer
+  - precioUnitario: BigDecimal
+  - subtotal: BigDecimal
+  --
+  + calcularSubtotal(): BigDecimal
+}
+
+class Gasto {
+  - id: Long
+  - descripcion: String
+  - monto: BigDecimal
+  - categoria: String
+  - fecha: LocalDateTime
+}
+
+class Produccion {
+  - id: Long
+  - producto: Producto
+  - cantidad: Integer
+  - fecha: LocalDateTime
+  - detalles: List~DetalleProduccion~
+  --
+  + calcularInsumosRequeridos(): List~DetalleProduccion~
+  + verificarStock(): Boolean
+}
+
+class DetalleProduccion {
+  - id: Long
+  - produccion: Produccion
+  - insumo: Insumo
+  - cantidadRequerida: BigDecimal
+  - cantidadUsada: BigDecimal
+  - suficiente: Boolean
+  --
+  + verificarDisponibilidad(): Boolean
+  + registrarUso(cantidad: BigDecimal): void
+}
+
+class Empleado {
+  - id: Long
+  - nombre: String
+  - activo: Boolean
+  - nominas: List~Nomina~
+}
+
+class Nomina {
+  - id: Long
+  - empleado: Empleado
+  - monto: BigDecimal
+  - fecha: LocalDateTime
+  - deudaAcumulada: BigDecimal
+  --
+  + actualizarDeuda(monto: BigDecimal): void
+}
+
+UnidadMedida <.. Insumo : usa
+UnidadMedida <.. DetalleReceta : usa
+
+Producto "muchos" --> "1" Receta : usa
+Receta "1" *-- "muchos" DetalleReceta : contiene
+DetalleReceta "muchos" --> "1" Insumo : referencia
+
+Venta "1" *-- "muchos" DetalleVenta : contiene
+DetalleVenta "muchos" --> "1" Producto : incluye
+
+Produccion "muchos" --> "1" Producto : produce
+Produccion "1" *-- "muchos" DetalleProduccion : contiene
+DetalleProduccion "muchos" --> "1" Insumo : consume
+
+Empleado "1" *-- "muchos" Nomina : tiene
+
+@enduml
