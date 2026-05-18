@@ -13,7 +13,7 @@ public class OpenApiConfig {
         return new OpenAPI()
                 .info(new Info()
                         .title("GArepas API")
-                        .description("Sistema de inventario y gestión para GARepas")
+                        .description("Sistema de Gestion de inventario y finanzas para GArepas.")
                         .version("1.0.0"));
     }
 }
