@@ -2,6 +2,7 @@ package com.garepas.garepasapp.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -20,6 +21,13 @@ public class Empleado {
 
     @Column(nullable = false, length = 60)
     private String nombre;
+
+    @Column(nullable = false, precision = 10, scale = 2)
+    private BigDecimal precioDia;
+
+    @Column(nullable = false)
+    @Builder.Default
+    private Integer diasTrabajados = 0;
 
     @Column(nullable = false)
     private Boolean activo;
