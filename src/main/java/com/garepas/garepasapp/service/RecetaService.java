@@ -1,5 +1,6 @@
 package com.garepas.garepasapp.service;
 
+import com.garepas.garepasapp.dto.request.DetalleRecetaRequest;
 import com.garepas.garepasapp.dto.request.RecetaRequest;
 import com.garepas.garepasapp.dto.response.RecetaResponse;
 import com.garepas.garepasapp.entity.DetalleReceta;
@@ -13,7 +14,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -47,20 +50,17 @@ public class RecetaService {
                 .descripcion(request.descripcion())
                 .build();
 
+        Map<Long, Insumo> insumos = cargarInsumos(request.detalles());
         List<DetalleReceta> detalles = request.detalles().stream()
-                .map(detalleRequest -> {
-                    Insumo insumo = insumoRepository.findById(detalleRequest.insumoId())
-                            .orElseThrow(() -> new RecursoNoEncontradoException("Insumo", detalleRequest.insumoId()));
-                    return DetalleReceta.builder()
-                            .receta(receta)
-                            .insumo(insumo)
-                            .cantidad(detalleRequest.cantidad())
-                            .unidadMedida(detalleRequest.unidadMedida())
-                            .build();
-                })
+                .map(dr -> DetalleReceta.builder()
+                        .receta(receta)
+                        .insumo(insumos.get(dr.insumoId()))
+                        .cantidad(dr.cantidad())
+                        .unidadMedida(dr.unidadMedida())
+                        .build())
                 .toList();
 
-        receta.setDetalles(detalles);
+        receta.getDetalles().addAll(detalles);
         return RecetaResponse.desde(recetaRepository.save(receta));
     }
 
@@ -76,22 +76,20 @@ public class RecetaService {
 
         receta.setNombre(request.nombre());
         receta.setDescripcion(request.descripcion());
+
+        Map<Long, Insumo> insumos = cargarInsumos(request.detalles());
+
+        // Reemplazo total pero conservando la lista existente para respetar orphanRemoval
         receta.getDetalles().clear();
+        for (DetalleRecetaRequest dr : request.detalles()) {
+            receta.getDetalles().add(DetalleReceta.builder()
+                    .receta(receta)
+                    .insumo(insumos.get(dr.insumoId()))
+                    .cantidad(dr.cantidad())
+                    .unidadMedida(dr.unidadMedida())
+                    .build());
+        }
 
-        List<DetalleReceta> detalles = request.detalles().stream()
-                .map(detalleRequest -> {
-                    Insumo insumo = insumoRepository.findById(detalleRequest.insumoId())
-                            .orElseThrow(() -> new RecursoNoEncontradoException("Insumo", detalleRequest.insumoId()));
-                    return DetalleReceta.builder()
-                            .receta(receta)
-                            .insumo(insumo)
-                            .cantidad(detalleRequest.cantidad())
-                            .unidadMedida(detalleRequest.unidadMedida())
-                            .build();
-                })
-                .toList();
-
-        receta.getDetalles().addAll(detalles);
         return RecetaResponse.desde(recetaRepository.save(receta));
     }
 
@@ -101,5 +99,19 @@ public class RecetaService {
             throw new RecursoNoEncontradoException("Receta", id);
         }
         recetaRepository.deleteById(id);
+    }
+
+    private Map<Long, Insumo> cargarInsumos(List<DetalleRecetaRequest> detalles) {
+        List<Long> ids = detalles.stream().map(DetalleRecetaRequest::insumoId).distinct().toList();
+        Map<Long, Insumo> map = new HashMap<>();
+        for (Insumo i : insumoRepository.findAllById(ids)) {
+            map.put(i.getId(), i);
+        }
+        for (Long id : ids) {
+            if (!map.containsKey(id)) {
+                throw new RecursoNoEncontradoException("Insumo", id);
+            }
+        }
+        return map;
     }
 }

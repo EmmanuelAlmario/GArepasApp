@@ -10,9 +10,13 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@tanstack/react-query": "^5.85.2",
     "axios": "^1.16.1",
+    "framer-motion": "^12.23.12",
+    "lucide-react": "^0.539.0",
     "react": "^19.2.6",
     "react-dom": "^19.2.6",
+    "react-hot-toast": "^2.6.0",
     "react-router-dom": "^7.15.1",
     "recharts": "^3.8.1"
   },

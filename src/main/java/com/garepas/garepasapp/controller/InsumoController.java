@@ -1,6 +1,8 @@
 package com.garepas.garepasapp.controller;
 
+import com.garepas.garepasapp.dto.request.AjusteStockRequest;
 import com.garepas.garepasapp.dto.request.InsumoRequest;
+import com.garepas.garepasapp.dto.response.AjusteStockResponse;
 import com.garepas.garepasapp.dto.response.InsumoResponse;
 import com.garepas.garepasapp.service.InsumoService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -56,5 +58,11 @@ public class InsumoController {
     public ResponseEntity<Void> eliminar(@PathVariable Long id) {
         insumoService.eliminar(id);
         return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/ajustar-stock")
+    @Operation(summary = "Reducir stock de múltiples insumos en una sola transacción")
+    public ResponseEntity<AjusteStockResponse> ajustarStock(@Valid @RequestBody AjusteStockRequest request) {
+        return ResponseEntity.ok(insumoService.ajustarStock(request));
     }
 }

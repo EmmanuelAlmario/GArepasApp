@@ -1,7 +1,9 @@
 package com.garepas.garepasapp.dto.response;
 
 import com.garepas.garepasapp.entity.Producto;
+import com.garepas.garepasapp.entity.Receta;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 
 public record ProductoResponse(
         Long id,
@@ -10,17 +12,36 @@ public record ProductoResponse(
         BigDecimal precioVenta,
         Long recetaId,
         String recetaNombre,
-        Boolean activo
+        Boolean activo,
+        BigDecimal costoUnitario,
+        BigDecimal margen,
+        BigDecimal margenPorcentaje
 ) {
     public static ProductoResponse desde(Producto producto) {
+        Receta receta = producto.getReceta();
+        BigDecimal costo = BigDecimal.ZERO;
+        if (receta != null && receta.getDetalles() != null) {
+            costo = receta.getDetalles().stream()
+                    .map(d -> d.getCantidad().multiply(d.getInsumo().getPrecioPorGramo()))
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+        }
+        BigDecimal precioVenta = producto.getPrecioVenta() != null ? producto.getPrecioVenta() : BigDecimal.ZERO;
+        BigDecimal margen = precioVenta.subtract(costo);
+        BigDecimal margenPct = precioVenta.compareTo(BigDecimal.ZERO) > 0
+                ? margen.multiply(BigDecimal.valueOf(100))
+                        .divide(precioVenta, 2, RoundingMode.HALF_UP)
+                : BigDecimal.ZERO;
         return new ProductoResponse(
                 producto.getId(),
                 producto.getNombre(),
                 producto.getStockActual(),
-                producto.getPrecioVenta(),
-                producto.getReceta() != null ? producto.getReceta().getId() : null,
-                producto.getReceta() != null ? producto.getReceta().getNombre() : null,
-                producto.getActivo()
+                precioVenta,
+                receta != null ? receta.getId() : null,
+                receta != null ? receta.getNombre() : null,
+                producto.getActivo(),
+                costo,
+                margen,
+                margenPct
         );
     }
 }

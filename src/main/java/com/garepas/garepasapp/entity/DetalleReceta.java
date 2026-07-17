@@ -26,7 +26,7 @@ public class DetalleReceta {
     @JoinColumn(name = "insumo_id", nullable = false)
     private Insumo insumo;
 
-    @Column(nullable = false, precision = 10, scale = 2)
+    @Column(nullable = false, precision = 15, scale = 4)
     private BigDecimal cantidad;
 
     @Enumerated(EnumType.STRING)

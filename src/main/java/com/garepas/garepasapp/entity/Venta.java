@@ -4,11 +4,11 @@ import jakarta.persistence.*;
 import lombok.*;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
 
 @Entity
-@Table(name = "ventas")
+@Table(name = "ventas", indexes = {
+        @Index(name = "idx_ventas_fecha", columnList = "fecha")
+})
 @Getter
 @Setter
 @NoArgsConstructor
@@ -23,10 +23,10 @@ public class Venta {
     @Column(nullable = false)
     private LocalDateTime fecha;
 
-    @Column(nullable = false, precision = 10, scale = 2)
+    @Column(nullable = false, precision = 12, scale = 2)
     private BigDecimal total;
 
     @OneToMany(mappedBy = "venta", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
-    private List<DetalleVenta> detalles = new ArrayList<>();
+    private java.util.List<DetalleVenta> detalles = new java.util.ArrayList<>();
 }

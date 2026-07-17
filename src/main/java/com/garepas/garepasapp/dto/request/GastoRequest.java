@@ -1,5 +1,6 @@
 package com.garepas.garepasapp.dto.request;
 
+import com.garepas.garepasapp.enums.CategoriaGasto;
 import jakarta.validation.constraints.*;
 import java.math.BigDecimal;
 
@@ -13,7 +14,6 @@ public record GastoRequest(
         @DecimalMin(value = "0.0", inclusive = false, message = "El monto debe ser mayor a cero")
         BigDecimal monto,
 
-        @NotBlank(message = "La categoría es obligatoria")
-        @Size(max = 30, message = "La categoría no puede superar 30 caracteres")
-        String categoria
+        @NotNull(message = "La categoría es obligatoria")
+        CategoriaGasto categoria
 ) {}

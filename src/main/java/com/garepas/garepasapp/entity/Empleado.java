@@ -7,7 +7,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Entity
-@Table(name = "empleados")
+@Table(name = "empleados", uniqueConstraints = {
+        @UniqueConstraint(name = "uk_empleados_nombre", columnNames = "nombre")
+})
 @Getter
 @Setter
 @NoArgsConstructor
@@ -22,7 +24,7 @@ public class Empleado {
     @Column(nullable = false, length = 60)
     private String nombre;
 
-    @Column(nullable = false, precision = 10, scale = 2)
+    @Column(nullable = false, precision = 12, scale = 2)
     private BigDecimal precioDia;
 
     @Column(nullable = false)
