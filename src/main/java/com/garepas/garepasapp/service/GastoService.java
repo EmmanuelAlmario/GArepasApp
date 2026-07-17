@@ -6,6 +6,8 @@ import com.garepas.garepasapp.entity.Gasto;
 import com.garepas.garepasapp.exception.RecursoNoEncontradoException;
 import com.garepas.garepasapp.repository.GastoRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -20,10 +22,15 @@ public class GastoService {
 
     @Transactional(readOnly = true)
     public List<GastoResponse> listarTodos() {
-        return gastoRepository.findAll()
+        return gastoRepository.findAllByOrderByFechaDesc()
                 .stream()
                 .map(GastoResponse::desde)
                 .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public Page<GastoResponse> listarPaginado(Pageable pageable) {
+        return gastoRepository.findAllByOrderByFechaDesc(pageable).map(GastoResponse::desde);
     }
 
     @Transactional(readOnly = true)

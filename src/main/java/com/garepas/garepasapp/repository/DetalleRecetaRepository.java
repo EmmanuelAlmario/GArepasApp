@@ -10,6 +10,4 @@ import java.util.List;
 public interface DetalleRecetaRepository extends JpaRepository<DetalleReceta, Long> {
 
     List<DetalleReceta> findByRecetaId(Long recetaId);
-
-    void deleteByRecetaId(Long recetaId);
 }

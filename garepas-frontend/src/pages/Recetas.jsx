@@ -6,7 +6,7 @@ import Button from '../components/Button'
 import FormField from '../components/FormField'
 import { getRecetas, createReceta, updateReceta, deleteReceta } from '../api/recetas'
 import { getInsumos } from '../api/insumos'
-import { aUnidadBase, unidadBase } from '../utils/unidades'
+import { aUnidadBase, unidadBase, fmtCantidad, desdeBase } from '../utils/unidades'
 
 const UNIDADES = ['GRAMO', 'KILOGRAMO', 'MILILITRO', 'LITRO', 'UNIDAD', 'CUCHARADA', 'TAZA'].map((u) => ({
   value: u, label: u,
@@ -15,7 +15,10 @@ const UNIDADES = ['GRAMO', 'KILOGRAMO', 'MILILITRO', 'LITRO', 'UNIDAD', 'CUCHARA
 const detalleInicial = { insumoId: '', cantidad: '', unidadMedida: '' }
 const inicial = { nombre: '', descripcion: '', detalles: [{ ...detalleInicial }] }
 
-export default function Recetas() {
+const fmt = (n) =>
+  new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(n || 0)
+
+export default function Recetas({ embedded = false }) {
   const [recetas, setRecetas] = useState([])
   const [insumos, setInsumos] = useState([])
   const [modal, setModal] = useState(false)
@@ -78,11 +81,14 @@ export default function Recetas() {
     setForm({
       nombre: row.nombre,
       descripcion: row.descripcion ?? '',
-      detalles: row.detalles?.map((d) => ({
-        insumoId: d.insumoId,
-        cantidad: d.cantidad,
-        unidadMedida: d.unidadMedida,
-      })) ?? [{ ...detalleInicial }],
+      detalles: row.detalles?.map((d) => {
+        const { cantidad, unidad } = desdeBase(d.cantidad, d.unidadMedida)
+        return {
+          insumoId: d.insumoId,
+          cantidad: String(cantidad),
+          unidadMedida: unidad,
+        }
+      }) ?? [{ ...detalleInicial }],
     })
     setEditando(row.id)
     setModal(true)
@@ -105,17 +111,34 @@ export default function Recetas() {
       key: 'detalles', label: 'Insumos',
       render: (v) => `${v?.length ?? 0} insumo(s)`,
     },
+    { key: 'costoTotal', label: 'Costo total', render: (v) => fmt(v) },
   ]
+
+  const costoEstimado = form.detalles.reduce((acc, d) => {
+    const insumo = insumos.find((i) => i.id === Number(d.insumoId))
+    if (!insumo || !d.cantidad || !d.unidadMedida) return acc
+    const cantidadBase = aUnidadBase(Number(d.cantidad), d.unidadMedida)
+    return acc + (cantidadBase * Number(insumo.precioPorGramo || 0))
+  }, 0)
 
   const insumoOpts = insumos.map((i) => ({ value: i.id, label: i.nombre }))
 
   return (
     <div>
-      <PageHeader title="Recetas">
-        <Button onClick={() => { setForm(inicial); setEditando(null); setModal(true) }}>
-          + Agregar receta
-        </Button>
-      </PageHeader>
+      {!embedded && (
+        <PageHeader title="Recetas">
+          <Button onClick={() => { setForm(inicial); setEditando(null); setModal(true) }}>
+            + Agregar receta
+          </Button>
+        </PageHeader>
+      )}
+      {embedded && (
+        <div className="flex justify-end mb-4">
+          <Button onClick={() => { setForm(inicial); setEditando(null); setModal(true) }}>
+            + Agregar receta
+          </Button>
+        </div>
+      )}
 
       <DataTable columns={columns} data={recetas} onEdit={handleEditar} onDelete={handleEliminar} />
 
@@ -135,16 +158,18 @@ export default function Recetas() {
               <div className="space-y-2">
                 {form.detalles.map((d, i) => (
                   <div key={i} className="space-y-1">
-                    <div className="grid grid-cols-[1fr_80px_100px_32px] gap-2 items-end">
-                      <FormField
-                        label={i === 0 ? 'Insumo' : ''}
-                        name="insumoId"
-                        type="select"
-                        value={d.insumoId}
-                        onChange={(e) => handleDetalleChange(i, e)}
-                        options={insumoOpts}
-                        required
-                      />
+                    <div className="grid grid-cols-2 sm:grid-cols-[1fr_80px_100px_32px] gap-2 items-end">
+                      <div className="col-span-2 sm:col-span-1">
+                        <FormField
+                          label={i === 0 ? 'Insumo' : ''}
+                          name="insumoId"
+                          type="select"
+                          value={d.insumoId}
+                          onChange={(e) => handleDetalleChange(i, e)}
+                          options={insumoOpts}
+                          required
+                        />
+                      </div>
                       <FormField
                         label={i === 0 ? 'Cantidad' : ''}
                         name="cantidad"
@@ -172,7 +197,7 @@ export default function Recetas() {
                     </div>
                     {d.cantidad && d.unidadMedida && d.unidadMedida !== unidadBase(d.unidadMedida) && (
                       <p className="text-xs text-gray-400 pl-1">
-                        → {aUnidadBase(Number(d.cantidad), d.unidadMedida)} {unidadBase(d.unidadMedida)}
+                        → {fmtCantidad(aUnidadBase(Number(d.cantidad), d.unidadMedida), unidadBase(d.unidadMedida))}
                       </p>
                     )}
                   </div>
@@ -181,6 +206,9 @@ export default function Recetas() {
             </div>
 
             <div className="flex justify-end gap-2 pt-2">
+              <div className="mr-auto bg-[#fff1c6] border border-[#f6d67f] px-3 py-2 rounded-lg text-sm font-bold text-[var(--brand-ink)]">
+                Costo estimado: {fmt(costoEstimado)}
+              </div>
               <Button variant="secondary" onClick={() => setModal(false)}>Cancelar</Button>
               <Button type="submit">{editando ? 'Guardar cambios' : 'Crear receta'}</Button>
             </div>

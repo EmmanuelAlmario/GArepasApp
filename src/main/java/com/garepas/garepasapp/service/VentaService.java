@@ -10,11 +10,14 @@ import com.garepas.garepasapp.exception.RecursoNoEncontradoException;
 import com.garepas.garepasapp.repository.ProductoRepository;
 import com.garepas.garepasapp.repository.VentaRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -26,10 +29,15 @@ public class VentaService {
 
     @Transactional(readOnly = true)
     public List<VentaResponse> listarTodas() {
-        return ventaRepository.findAll()
+        return ventaRepository.findAllByOrderByFechaDesc()
                 .stream()
                 .map(VentaResponse::desde)
                 .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public Page<VentaResponse> listarPaginado(Pageable pageable) {
+        return ventaRepository.findAllBy(pageable).map(VentaResponse::desde);
     }
 
     @Transactional(readOnly = true)
@@ -41,44 +49,49 @@ public class VentaService {
 
     @Transactional
     public VentaResponse registrar(VentaRequest request) {
+        if (request.detalles() == null || request.detalles().isEmpty()) {
+            throw new OperacionInvalidaException("La venta debe incluir al menos un detalle");
+        }
+
         Venta venta = Venta.builder()
                 .fecha(LocalDateTime.now())
                 .total(BigDecimal.ZERO)
                 .build();
 
-        List<DetalleVenta> detalles = request.detalles().stream()
-                .map(detalleRequest -> {
-                    Producto producto = productoRepository.findById(detalleRequest.productoId())
-                            .orElseThrow(() -> new RecursoNoEncontradoException("Producto", detalleRequest.productoId()));
+        List<DetalleVenta> detalles = new ArrayList<>();
+        BigDecimal total = BigDecimal.ZERO;
 
-                    if (!producto.getActivo()) {
-                        throw new OperacionInvalidaException("El producto '" + producto.getNombre() + "' no está activo");
-                    }
+        for (var detalleRequest : request.detalles()) {
+            Producto producto = productoRepository.findById(detalleRequest.productoId())
+                    .orElseThrow(() -> new RecursoNoEncontradoException("Producto", detalleRequest.productoId()));
 
-                    if (producto.getStockActual() < detalleRequest.cantidad()) {
-                        throw new OperacionInvalidaException("Stock insuficiente para el producto '" + producto.getNombre() +
-                                "'. Disponible: " + producto.getStockActual() + ", Solicitado: " + detalleRequest.cantidad());
-                    }
+            if (!producto.getActivo()) {
+                throw new OperacionInvalidaException(
+                        "El producto '" + producto.getNombre() + "' no está activo");
+            }
+            if (producto.getStockActual() < detalleRequest.cantidad()) {
+                throw new OperacionInvalidaException(
+                        "Stock insuficiente para el producto '" + producto.getNombre() +
+                                "'. Disponible: " + producto.getStockActual() +
+                                ", Solicitado: " + detalleRequest.cantidad());
+            }
 
-                    BigDecimal subtotal = detalleRequest.precioUnitario()
-                            .multiply(BigDecimal.valueOf(detalleRequest.cantidad()));
+            // Precio del servidor (snapshot); no confiar en el cliente.
+            BigDecimal precioUnitario = producto.getPrecioVenta();
+            BigDecimal subtotal = precioUnitario.multiply(BigDecimal.valueOf(detalleRequest.cantidad()));
 
-                    producto.setStockActual(producto.getStockActual() - detalleRequest.cantidad());
-                    productoRepository.save(producto);
+            producto.setStockActual(producto.getStockActual() - detalleRequest.cantidad());
+            productoRepository.save(producto);
 
-                    return DetalleVenta.builder()
-                            .venta(venta)
-                            .producto(producto)
-                            .cantidad(detalleRequest.cantidad())
-                            .precioUnitario(detalleRequest.precioUnitario())
-                            .subtotal(subtotal)
-                            .build();
-                })
-                .toList();
-
-        BigDecimal total = detalles.stream()
-                .map(DetalleVenta::getSubtotal)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
+            detalles.add(DetalleVenta.builder()
+                    .venta(venta)
+                    .producto(producto)
+                    .cantidad(detalleRequest.cantidad())
+                    .precioUnitario(precioUnitario)
+                    .subtotal(subtotal)
+                    .build());
+            total = total.add(subtotal);
+        }
 
         venta.setTotal(total);
         venta.setDetalles(detalles);
@@ -90,11 +103,11 @@ public class VentaService {
         Venta venta = ventaRepository.findById(id)
                 .orElseThrow(() -> new RecursoNoEncontradoException("Venta", id));
 
-        venta.getDetalles().forEach(detalle -> {
+        for (DetalleVenta detalle : venta.getDetalles()) {
             Producto producto = detalle.getProducto();
             producto.setStockActual(producto.getStockActual() + detalle.getCantidad());
             productoRepository.save(producto);
-        });
+        }
 
         ventaRepository.deleteById(id);
     }

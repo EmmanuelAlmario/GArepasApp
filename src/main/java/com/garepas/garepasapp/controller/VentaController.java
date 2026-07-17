@@ -7,6 +7,8 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -25,6 +27,12 @@ public class VentaController {
     @Operation(summary = "Listar todas las ventas")
     public ResponseEntity<List<VentaResponse>> listarTodas() {
         return ResponseEntity.ok(ventaService.listarTodas());
+    }
+
+    @GetMapping("/paginado")
+    @Operation(summary = "Listar ventas paginadas")
+    public ResponseEntity<Page<VentaResponse>> listarPaginado(Pageable pageable) {
+        return ResponseEntity.ok(ventaService.listarPaginado(pageable));
     }
 
     @GetMapping("/{id}")

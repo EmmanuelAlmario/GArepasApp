@@ -1,1 +1,30 @@
+@import url('https://fonts.googleapis.com/css2?family=Bagel+Fat+One&family=Nunito:wght@400;600;700;800&display=swap');
+
 @import "tailwindcss";
+
+:root {
+  --brand-yellow: #ffc72c;
+  --brand-yellow-soft: #ffe38a;
+  --brand-orange: #f28c28;
+  --brand-red: #c0392b;
+  --brand-ink: #3e2a1e;
+  --brand-cream: #fff6e1;
+  --brand-surface: #fffdf7;
+  --brand-success: #6a9a3f;
+  --brand-danger: #b02a20;
+}
+
+body {
+  font-family: 'Nunito', sans-serif;
+  color: var(--brand-ink);
+  background: radial-gradient(circle at top left, #fff4bf, #fff6e1 40%, #fffdf7);
+}
+
+.brand-display {
+  font-family: 'Bagel Fat One', system-ui;
+  letter-spacing: 0.3px;
+}
+
+.brand-gradient {
+  background: linear-gradient(180deg, var(--brand-orange) 0%, var(--brand-red) 100%);
+}

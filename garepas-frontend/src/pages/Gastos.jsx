@@ -5,10 +5,11 @@ import Modal from '../components/Modal'
 import Button from '../components/Button'
 import FormField from '../components/FormField'
 import { getGastos, createGasto, updateGasto, deleteGasto } from '../api/gastos'
+import { CATEGORIAS_GASTO } from '../constants/categoriasGasto'
 
 const inicial = { descripcion: '', monto: '', categoria: '' }
 
-export default function Gastos() {
+export default function Gastos({ embedded = false }) {
   const [gastos, setGastos] = useState([])
   const [modal, setModal] = useState(false)
   const [form, setForm] = useState(inicial)
@@ -73,11 +74,20 @@ export default function Gastos() {
 
   return (
     <div>
-      <PageHeader title="Gastos">
-        <Button onClick={() => { setForm(inicial); setEditando(null); setModal(true) }}>
-          + Registrar gasto
-        </Button>
-      </PageHeader>
+      {!embedded && (
+        <PageHeader title="Gastos">
+          <Button onClick={() => { setForm(inicial); setEditando(null); setModal(true) }}>
+            + Registrar gasto
+          </Button>
+        </PageHeader>
+      )}
+      {embedded && (
+        <div className="flex justify-end mb-4">
+          <Button onClick={() => { setForm(inicial); setEditando(null); setModal(true) }}>
+            + Registrar gasto
+          </Button>
+        </div>
+      )}
 
       <DataTable columns={columns} data={gastos} onEdit={handleEditar} onDelete={handleEliminar} />
 
@@ -85,9 +95,9 @@ export default function Gastos() {
         <Modal title={editando ? 'Editar gasto' : 'Registrar gasto'} onClose={() => setModal(false)}>
           <form onSubmit={handleSubmit} className="space-y-4">
             <FormField label="Descripción" name="descripcion" value={form.descripcion} onChange={handleChange} required />
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <FormField label="Monto" name="monto" type="number" value={form.monto} onChange={handleChange} required />
-              <FormField label="Categoría" name="categoria" value={form.categoria} onChange={handleChange} required />
+              <FormField label="Categoría" name="categoria" type="select" value={form.categoria} onChange={handleChange} options={CATEGORIAS_GASTO} required />
             </div>
             <div className="flex justify-end gap-2 pt-2">
               <Button variant="secondary" onClick={() => setModal(false)}>Cancelar</Button>

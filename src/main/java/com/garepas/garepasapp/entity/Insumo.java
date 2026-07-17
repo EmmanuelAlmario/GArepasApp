@@ -6,7 +6,9 @@ import lombok.*;
 import java.math.BigDecimal;
 
 @Entity
-@Table(name = "insumos")
+@Table(name = "insumos", uniqueConstraints = {
+        @UniqueConstraint(name = "uk_insumos_nombre", columnNames = "nombre")
+})
 @Getter
 @Setter
 @NoArgsConstructor
@@ -27,10 +29,14 @@ public class Insumo {
     @Column(nullable = false, length = 30)
     private String marca;
 
-    @Column(nullable = false, precision = 10, scale = 2)
+    @Column(nullable = false, precision = 15, scale = 4)
     private BigDecimal stockActual;
 
-    @Column(nullable = false, precision = 10, scale = 2)
+    /**
+     * Precio por unidad base (gramo o mililitro o unidad). Se guarda con
+     * precisión fina porque puede ser una fracción pequeña ($0.0125/g).
+     */
+    @Column(nullable = false, precision = 15, scale = 6)
     private BigDecimal precioPorGramo;
 
     @Enumerated(EnumType.STRING)

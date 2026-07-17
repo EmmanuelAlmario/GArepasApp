@@ -5,7 +5,9 @@ import lombok.*;
 import java.math.BigDecimal;
 
 @Entity
-@Table(name = "productos")
+@Table(name = "productos", uniqueConstraints = {
+        @UniqueConstraint(name = "uk_productos_nombre", columnNames = "nombre")
+})
 @Getter
 @Setter
 @NoArgsConstructor
@@ -23,7 +25,7 @@ public class Producto {
     @Column(nullable = false)
     private Integer stockActual;
 
-    @Column(nullable = false, precision = 10, scale = 2)
+    @Column(nullable = false, precision = 12, scale = 2)
     private BigDecimal precioVenta;
 
     @ManyToOne(fetch = FetchType.LAZY)

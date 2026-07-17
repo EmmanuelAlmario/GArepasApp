@@ -9,15 +9,21 @@ public record DetalleRecetaResponse(
         Long insumoId,
         String insumoNombre,
         BigDecimal cantidad,
-        UnidadMedida unidadMedida
+        UnidadMedida unidadMedida,
+        BigDecimal precioPorGramo,
+        BigDecimal subtotalCosto
 ) {
     public static DetalleRecetaResponse desde(DetalleReceta detalle) {
+        BigDecimal precio = detalle.getInsumo().getPrecioPorGramo();
+        BigDecimal subtotal = detalle.getCantidad().multiply(precio);
         return new DetalleRecetaResponse(
                 detalle.getId(),
                 detalle.getInsumo().getId(),
                 detalle.getInsumo().getNombre(),
                 detalle.getCantidad(),
-                detalle.getUnidadMedida()
+                detalle.getUnidadMedida(),
+                precio,
+                subtotal
         );
     }
 }

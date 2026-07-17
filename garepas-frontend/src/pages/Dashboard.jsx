@@ -11,7 +11,7 @@ import { getVentas } from '../api/ventas'
 import { getGastos } from '../api/gastos'
 
 const MESES = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic']
-const COLORES_DONA = ['#3b82f6', '#ef4444', '#22c55e']
+const COLORES_DONA = ['#f28c28', '#c0392b', '#6a9a3f']
 
 const fmt = (n) =>
   new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(n)
@@ -65,6 +65,9 @@ export default function Dashboard() {
 
   const totalVentas = datos.ventas.reduce((acc, v) => acc + Number(v.total), 0)
   const totalGastos = datos.gastos.reduce((acc, g) => acc + Number(g.monto), 0)
+  const cogs = datos.gastos
+    .filter((g) => g.categoria === 'MATERIA_PRIMA')
+    .reduce((acc, g) => acc + Number(g.monto), 0)
   const rentabilidad = totalVentas - totalGastos
   const margen = totalVentas > 0 ? ((rentabilidad / totalVentas) * 100).toFixed(1) : 0
   const productosActivos = datos.productos.filter((p) => p.activo).length
@@ -76,28 +79,28 @@ export default function Dashboard() {
     datos.ventas.forEach((v) => {
       const fecha = new Date(v.fecha)
       const clave = `${fecha.getFullYear()}-${fecha.getMonth()}`
-      if (!mapa[clave]) mapa[clave] = { mes: MESES[fecha.getMonth()], ingresos: 0, gastos: 0, año: fecha.getFullYear() }
+      if (!mapa[clave]) mapa[clave] = { mes: `${MESES[fecha.getMonth()]} ${fecha.getFullYear()}`, ingresos: 0, gastos: 0, año: fecha.getFullYear(), m: fecha.getMonth() }
       mapa[clave].ingresos += Number(v.total)
     })
 
     datos.gastos.forEach((g) => {
       const fecha = new Date(g.fecha)
       const clave = `${fecha.getFullYear()}-${fecha.getMonth()}`
-      if (!mapa[clave]) mapa[clave] = { mes: MESES[fecha.getMonth()], ingresos: 0, gastos: 0, año: fecha.getFullYear() }
+      if (!mapa[clave]) mapa[clave] = { mes: `${MESES[fecha.getMonth()]} ${fecha.getFullYear()}`, ingresos: 0, gastos: 0, año: fecha.getFullYear(), m: fecha.getMonth() }
       mapa[clave].gastos += Number(g.monto)
     })
 
     return Object.values(mapa)
-      .sort((a, b) => a.año - b.año || MESES.indexOf(a.mes) - MESES.indexOf(b.mes))
+      .sort((a, b) => a.año - b.año || a.m - b.m)
       .map((m) => ({ ...m, rentabilidad: m.ingresos - m.gastos }))
   }
 
   const dataMes = porMes()
 
   const dataDona = [
-    { name: 'Ingresos', value: totalVentas, fill: '#3b82f6' },
-    { name: 'Gastos', value: totalGastos, fill: '#ef4444' },
-    { name: 'Utilidad', value: Math.max(rentabilidad, 0), fill: '#22c55e' },
+    { name: 'Ingresos', value: totalVentas, fill: COLORES_DONA[0] },
+    { name: 'Gastos', value: totalGastos, fill: COLORES_DONA[1] },
+    { name: 'Utilidad', value: Math.max(rentabilidad, 0), fill: COLORES_DONA[2] },
   ].filter((d) => d.value > 0)
 
   return (
@@ -105,18 +108,22 @@ export default function Dashboard() {
       <PageHeader title="Dashboard" />
 
       {/* Métricas */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         <MetricCard label="Ingresos totales" value={fmt(totalVentas)} sub="Suma de ventas" color="blue" />
         <MetricCard label="Gastos totales" value={fmt(totalGastos)} sub="Suma de gastos" color="red" />
-        <MetricCard label="Rentabilidad" value={fmt(rentabilidad)} sub="Ingresos − Gastos" color="green" />
+        <MetricCard label="COGS" value={fmt(cogs)} sub="Materia prima" color="yellow" />
         <MetricCard label="Productos activos" value={productosActivos} sub="En catálogo" color="yellow" />
+      </div>
+
+      <div className="mb-5 bg-[#fff1c6] border border-[#f6d67f] rounded-xl px-4 py-3 text-sm font-bold text-[var(--brand-ink)]">
+        Rentabilidad real: {fmt(rentabilidad)}
       </div>
 
       {/* Gráficos rentabilidad */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
 
         {/* Dona */}
-        <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5 flex flex-col">
+        <div className="bg-[var(--brand-surface)] rounded-xl border border-[#f5e2af] shadow-sm p-5 flex flex-col">
           <h3 className="text-sm font-semibold text-gray-700 mb-1">Rentabilidad del negocio</h3>
           <p className="text-xs text-gray-400 mb-4">Distribución acumulada</p>
 
@@ -163,7 +170,7 @@ export default function Dashboard() {
         </div>
 
         {/* Barras por mes */}
-        <div className="lg:col-span-2 bg-white rounded-xl border border-gray-100 shadow-sm p-5">
+        <div className="lg:col-span-2 bg-[var(--brand-surface)] rounded-xl border border-[#f5e2af] shadow-sm p-5">
           <h3 className="text-sm font-semibold text-gray-700 mb-1">Ingresos vs Gastos</h3>
           <p className="text-xs text-gray-400 mb-4">Por mes</p>
 
@@ -192,9 +199,9 @@ export default function Dashboard() {
                   iconType="circle"
                   iconSize={8}
                 />
-                <Bar dataKey="ingresos" name="Ingresos" fill="#3b82f6" radius={[4, 4, 0, 0]} />
-                <Bar dataKey="gastos" name="Gastos" fill="#ef4444" radius={[4, 4, 0, 0]} />
-                <Bar dataKey="rentabilidad" name="Rentabilidad" fill="#22c55e" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="ingresos" name="Ingresos" fill="#f28c28" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="gastos" name="Gastos" fill="#c0392b" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="rentabilidad" name="Rentabilidad" fill="#6a9a3f" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           )}
@@ -203,57 +210,61 @@ export default function Dashboard() {
 
       {/* Tablas resumen */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5">
+        <div className="bg-[var(--brand-surface)] rounded-xl border border-[#f5e2af] shadow-sm p-5">
           <h3 className="text-sm font-semibold text-gray-700 mb-4">Últimas ventas</h3>
           {datos.ventas.length === 0 ? (
             <p className="text-gray-400 text-sm text-center py-6">Sin ventas registradas</p>
           ) : (
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-gray-100">
-                  <th className="text-left pb-2 text-xs text-gray-400 font-semibold uppercase">ID</th>
-                  <th className="text-left pb-2 text-xs text-gray-400 font-semibold uppercase">Fecha</th>
-                  <th className="text-right pb-2 text-xs text-gray-400 font-semibold uppercase">Total</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-50">
-                {datos.ventas.slice(0, 5).map((v) => (
-                  <tr key={v.id}>
-                    <td className="py-2.5 text-gray-500">#{v.id}</td>
-                    <td className="py-2.5 text-gray-700">
-                      {new Date(v.fecha).toLocaleDateString('es-CO')}
-                    </td>
-                    <td className="py-2.5 text-right font-medium text-gray-800">{fmt(v.total)}</td>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm min-w-[320px]">
+                <thead>
+                  <tr className="border-b border-gray-100">
+                    <th className="text-left pb-2 text-xs text-gray-400 font-semibold uppercase">ID</th>
+                    <th className="text-left pb-2 text-xs text-gray-400 font-semibold uppercase">Fecha</th>
+                    <th className="text-right pb-2 text-xs text-gray-400 font-semibold uppercase">Total</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody className="divide-y divide-gray-50">
+                  {datos.ventas.slice(0, 5).map((v) => (
+                    <tr key={v.id}>
+                      <td className="py-2.5 text-gray-500">#{v.id}</td>
+                      <td className="py-2.5 text-gray-700">
+                        {new Date(v.fecha).toLocaleDateString('es-CO')}
+                      </td>
+                      <td className="py-2.5 text-right font-medium text-gray-800">{fmt(v.total)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           )}
         </div>
 
-        <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5">
+        <div className="bg-[var(--brand-surface)] rounded-xl border border-[#f5e2af] shadow-sm p-5">
           <h3 className="text-sm font-semibold text-gray-700 mb-4">Últimos gastos</h3>
           {datos.gastos.length === 0 ? (
             <p className="text-gray-400 text-sm text-center py-6">Sin gastos registrados</p>
           ) : (
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-gray-100">
-                  <th className="text-left pb-2 text-xs text-gray-400 font-semibold uppercase">Descripción</th>
-                  <th className="text-left pb-2 text-xs text-gray-400 font-semibold uppercase">Categoría</th>
-                  <th className="text-right pb-2 text-xs text-gray-400 font-semibold uppercase">Monto</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-50">
-                {datos.gastos.slice(0, 5).map((g) => (
-                  <tr key={g.id}>
-                    <td className="py-2.5 text-gray-700 truncate max-w-[150px]">{g.descripcion}</td>
-                    <td className="py-2.5 text-gray-500">{g.categoria}</td>
-                    <td className="py-2.5 text-right font-medium text-gray-800">{fmt(g.monto)}</td>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm min-w-[380px]">
+                <thead>
+                  <tr className="border-b border-gray-100">
+                    <th className="text-left pb-2 text-xs text-gray-400 font-semibold uppercase">Descripción</th>
+                    <th className="text-left pb-2 text-xs text-gray-400 font-semibold uppercase">Categoría</th>
+                    <th className="text-right pb-2 text-xs text-gray-400 font-semibold uppercase">Monto</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody className="divide-y divide-gray-50">
+                  {datos.gastos.slice(0, 5).map((g) => (
+                    <tr key={g.id}>
+                      <td className="py-2.5 text-gray-700 truncate max-w-[150px]">{g.descripcion}</td>
+                      <td className="py-2.5 text-gray-500">{g.categoria}</td>
+                      <td className="py-2.5 text-right font-medium text-gray-800">{fmt(g.monto)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           )}
         </div>
       </div>

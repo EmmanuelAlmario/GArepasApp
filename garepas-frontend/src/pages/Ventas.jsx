@@ -48,7 +48,6 @@ export default function Ventas() {
       detalles: detalles.map((d) => ({
         productoId: Number(d.productoId),
         cantidad: Number(d.cantidad),
-        precioUnitario: Number(d.precioUnitario),
       })),
     }
     try {
@@ -108,8 +107,10 @@ export default function Ventas() {
               </div>
               <div className="space-y-2">
                 {detalles.map((d, i) => (
-                  <div key={i} className="grid grid-cols-[1fr_70px_100px_32px] gap-2 items-end">
-                    <FormField label={i === 0 ? 'Producto' : ''} name="productoId" type="select" value={d.productoId} onChange={(e) => handleDetalleChange(i, e)} options={productoOpts} required />
+                  <div key={i} className="grid grid-cols-2 sm:grid-cols-[1fr_70px_100px_32px] gap-2 items-end">
+                    <div className="col-span-2 sm:col-span-1">
+                      <FormField label={i === 0 ? 'Producto' : ''} name="productoId" type="select" value={d.productoId} onChange={(e) => handleDetalleChange(i, e)} options={productoOpts} required />
+                    </div>
                     <FormField label={i === 0 ? 'Cant.' : ''} name="cantidad" type="number" value={d.cantidad} onChange={(e) => handleDetalleChange(i, e)} required />
                     <FormField label={i === 0 ? 'Precio unit.' : ''} name="precioUnitario" type="number" value={d.precioUnitario} onChange={(e) => handleDetalleChange(i, e)} required />
                     <button type="button" onClick={() => quitarDetalle(i)} className="text-red-400 hover:text-red-600 text-lg pb-1">×</button>
@@ -117,6 +118,8 @@ export default function Ventas() {
                 ))}
               </div>
             </div>
+
+            <p className="text-xs text-[var(--brand-ink)]/60">El precio final se toma del servidor para evitar manipulaciones.</p>
 
             <div className="bg-gray-50 rounded-lg px-4 py-3 flex justify-between items-center">
               <span className="text-sm text-gray-500 font-medium">Total estimado</span>

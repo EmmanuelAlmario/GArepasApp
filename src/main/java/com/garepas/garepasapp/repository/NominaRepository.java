@@ -15,4 +15,8 @@ public interface NominaRepository extends JpaRepository<Nomina, Long> {
 
     @Query("SELECT COALESCE(SUM(n.diasPagados), 0) FROM Nomina n WHERE n.empleado.id = :empleadoId")
     Integer sumDiasPagadosByEmpleadoId(@Param("empleadoId") Long empleadoId);
+
+    @Query("SELECT n.empleado.id, COALESCE(SUM(n.diasPagados), 0) FROM Nomina n " +
+            "WHERE n.empleado.id IN :empleadoIds GROUP BY n.empleado.id")
+    List<Object[]> sumDiasPagadosGroupByEmpleadoIds(@Param("empleadoIds") List<Long> empleadoIds);
 }

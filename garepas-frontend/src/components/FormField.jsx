@@ -1,9 +1,9 @@
 export default function FormField({ label, name, type = 'text', value, onChange, options, required }) {
-  const base = "w-full px-3 py-2.5 rounded-lg border border-gray-200 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400 transition-all"
+  const base = 'w-full px-3 py-2.5 rounded-lg border border-[#f1ddb0] bg-white text-sm text-[var(--brand-ink)] focus:outline-none focus:ring-2 focus:ring-[var(--brand-orange)]/30 focus:border-[var(--brand-orange)] transition-all'
 
   return (
     <div>
-      <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">
+      <label className="block text-xs font-bold text-[var(--brand-ink)]/70 uppercase tracking-wide mb-1.5">
         {label}
       </label>
       {type === 'select' ? (

@@ -1,37 +1,38 @@
 export default function DataTable({ columns, data, onEdit, onDelete }) {
   if (!data || data.length === 0) {
     return (
-      <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-12 text-center">
-        <p className="text-gray-400 text-sm">No hay registros para mostrar</p>
+      <div className="bg-[var(--brand-surface)] rounded-xl border border-[#f5e2af] shadow-sm p-12 text-center">
+        <p className="text-[var(--brand-ink)]/60 text-sm">No hay registros para mostrar</p>
       </div>
     )
   }
 
   return (
-    <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
-      <table className="w-full text-sm">
+    <div className="bg-[var(--brand-surface)] rounded-xl border border-[#f5e2af] shadow-sm overflow-hidden">
+      <div className="overflow-x-auto">
+        <table className="w-full text-sm min-w-[640px]">
         <thead>
-          <tr className="border-b border-gray-100">
+          <tr className="border-b border-[#f2e0b2] bg-[#fff4d6]">
             {columns.map((col) => (
               <th
                 key={col.key}
-                className="text-left px-5 py-3.5 text-xs font-semibold text-gray-400 uppercase tracking-wide"
+                className="text-left px-5 py-3.5 text-xs font-bold text-[var(--brand-ink)]/70 uppercase tracking-wide"
               >
                 {col.label}
               </th>
             ))}
             {(onEdit || onDelete) && (
-              <th className="px-5 py-3.5 text-xs font-semibold text-gray-400 uppercase tracking-wide text-right">
+              <th className="px-5 py-3.5 text-xs font-bold text-[var(--brand-ink)]/70 uppercase tracking-wide text-right">
                 Acciones
               </th>
             )}
           </tr>
         </thead>
-        <tbody className="divide-y divide-gray-50">
+        <tbody className="divide-y divide-[#f9eecf]">
           {data.map((row, i) => (
-            <tr key={row.id ?? i} className="hover:bg-gray-50/60 transition-colors">
+            <tr key={row.id ?? i} className="hover:bg-[#fff7e5] transition-colors">
               {columns.map((col) => (
-                <td key={col.key} className="px-5 py-3.5 text-gray-700">
+                <td key={col.key} className="px-5 py-3.5 text-[var(--brand-ink)]">
                   {col.render ? col.render(row[col.key], row) : row[col.key] ?? '—'}
                 </td>
               ))}
@@ -39,20 +40,20 @@ export default function DataTable({ columns, data, onEdit, onDelete }) {
                 <td className="px-5 py-3.5 text-right">
                   <div className="flex items-center justify-end gap-2">
                     {onEdit && (
-                      <button
-                        onClick={() => onEdit(row)}
-                        className="text-xs px-3 py-1.5 rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-100 font-medium transition-colors"
-                      >
-                        Editar
-                      </button>
+                        <button
+                          onClick={() => onEdit(row)}
+                          className="text-xs px-3 py-1.5 rounded-lg bg-[#ffeec2] text-[var(--brand-ink)] hover:bg-[#ffe5a6] font-bold transition-colors"
+                        >
+                          Editar
+                        </button>
                     )}
                     {onDelete && (
-                      <button
-                        onClick={() => onDelete(row.id)}
-                        className="text-xs px-3 py-1.5 rounded-lg bg-red-50 text-red-500 hover:bg-red-100 font-medium transition-colors"
-                      >
-                        Eliminar
-                      </button>
+                        <button
+                          onClick={() => onDelete(row.id)}
+                          className="text-xs px-3 py-1.5 rounded-lg bg-[#fde7e4] text-[var(--brand-danger)] hover:bg-[#fbd4ce] font-bold transition-colors"
+                        >
+                          Eliminar
+                        </button>
                     )}
                   </div>
                 </td>
@@ -61,6 +62,7 @@ export default function DataTable({ columns, data, onEdit, onDelete }) {
           ))}
         </tbody>
       </table>
+      </div>
     </div>
   )
 }

@@ -1,8 +1,12 @@
 package com.garepas.garepasapp.service;
 
+import com.garepas.garepasapp.dto.request.AjusteStockRequest;
+import com.garepas.garepasapp.dto.request.DetalleAjusteStockRequest;
 import com.garepas.garepasapp.dto.request.InsumoRequest;
+import com.garepas.garepasapp.dto.response.AjusteStockResponse;
 import com.garepas.garepasapp.dto.response.InsumoResponse;
 import com.garepas.garepasapp.entity.Insumo;
+import com.garepas.garepasapp.exception.OperacionInvalidaException;
 import com.garepas.garepasapp.exception.RecursoDuplicadoException;
 import com.garepas.garepasapp.exception.RecursoNoEncontradoException;
 import com.garepas.garepasapp.repository.InsumoRepository;
@@ -10,7 +14,11 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
+import java.util.HashMap;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -82,5 +90,54 @@ public class InsumoService {
             throw new RecursoNoEncontradoException("Insumo", id);
         }
         insumoRepository.deleteById(id);
+    }
+
+    /**
+     * Reduce el stock de múltiples insumos en una sola transacción atómica.
+     * Las cantidades deben venir en la unidad base del insumo (gramo, ml o unidad).
+     * Si algún insumo no existe o su stock sería negativo, no se aplica ningún cambio.
+     */
+    @Transactional
+    public AjusteStockResponse ajustarStock(AjusteStockRequest request) {
+        List<Long> ids = request.detalles().stream()
+                .map(DetalleAjusteStockRequest::insumoId)
+                .distinct()
+                .toList();
+
+        Map<Long, Insumo> insumosMap = new HashMap<>();
+        for (Insumo i : insumoRepository.findAllById(ids)) {
+            insumosMap.put(i.getId(), i);
+        }
+        for (Long id : ids) {
+            if (!insumosMap.containsKey(id)) {
+                throw new RecursoNoEncontradoException("Insumo", id);
+            }
+        }
+
+        List<String> errores = new ArrayList<>();
+        for (DetalleAjusteStockRequest d : request.detalles()) {
+            Insumo insumo = insumosMap.get(d.insumoId());
+            BigDecimal nuevoStock = insumo.getStockActual().subtract(d.cantidad());
+            if (nuevoStock.compareTo(BigDecimal.ZERO) < 0) {
+                errores.add("Insumo '" + insumo.getNombre() + "': stock actual "
+                        + insumo.getStockActual() + ", intentas descontar " + d.cantidad());
+            }
+        }
+        if (!errores.isEmpty()) {
+            throw new OperacionInvalidaException(
+                    "Stock insuficiente para uno o más insumos. " + String.join(" | ", errores));
+        }
+
+        BigDecimal valorTotal = BigDecimal.ZERO;
+        List<InsumoResponse> actualizados = new ArrayList<>();
+        for (DetalleAjusteStockRequest d : request.detalles()) {
+            Insumo insumo = insumosMap.get(d.insumoId());
+            insumo.setStockActual(insumo.getStockActual().subtract(d.cantidad()));
+            insumoRepository.save(insumo);
+            valorTotal = valorTotal.add(d.cantidad().multiply(insumo.getPrecioPorGramo()));
+            actualizados.add(InsumoResponse.desde(insumo));
+        }
+
+        return new AjusteStockResponse(actualizados.size(), valorTotal, actualizados);
     }
 }

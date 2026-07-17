@@ -20,7 +20,7 @@ const inicialForm = { nombre: '', precioDia: '', activo: true }
 const fmt = (n) =>
   new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(n)
 
-export default function Empleados() {
+export default function Empleados({ embedded = false }) {
   const [empleados, setEmpleados] = useState([])
   const [modalEmpleado, setModalEmpleado] = useState(false)
   const [modalPago, setModalPago] = useState(false)
@@ -120,11 +120,20 @@ export default function Empleados() {
 
   return (
     <div>
-      <PageHeader title="Empleados">
-        <Button onClick={() => { setForm(inicialForm); setEditando(null); setModalEmpleado(true) }}>
-          + Registrar empleado
-        </Button>
-      </PageHeader>
+      {!embedded && (
+        <PageHeader title="Empleados">
+          <Button onClick={() => { setForm(inicialForm); setEditando(null); setModalEmpleado(true) }}>
+            + Registrar empleado
+          </Button>
+        </PageHeader>
+      )}
+      {embedded && (
+        <div className="flex justify-end mb-4">
+          <Button onClick={() => { setForm(inicialForm); setEditando(null); setModalEmpleado(true) }}>
+            + Registrar empleado
+          </Button>
+        </div>
+      )}
 
       <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
         <table className="w-full text-sm">

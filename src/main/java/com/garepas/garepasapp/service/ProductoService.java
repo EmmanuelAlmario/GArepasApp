@@ -4,6 +4,7 @@ import com.garepas.garepasapp.dto.request.ProductoRequest;
 import com.garepas.garepasapp.dto.response.ProductoResponse;
 import com.garepas.garepasapp.entity.Producto;
 import com.garepas.garepasapp.entity.Receta;
+import com.garepas.garepasapp.exception.OperacionInvalidaException;
 import com.garepas.garepasapp.exception.RecursoDuplicadoException;
 import com.garepas.garepasapp.exception.RecursoNoEncontradoException;
 import com.garepas.garepasapp.repository.ProductoRepository;
@@ -49,14 +50,10 @@ public class ProductoService {
         if (productoRepository.existsByNombreIgnoreCase(request.nombre())) {
             throw new RecursoDuplicadoException("Producto", "nombre", request.nombre());
         }
-        Receta receta = null;
-        if (request.recetaId() != null) {
-            receta = recetaRepository.findById(request.recetaId())
-                    .orElseThrow(() -> new RecursoNoEncontradoException("Receta", request.recetaId()));
-        }
+        Receta receta = resolverReceta(request.recetaId());
         Producto producto = Producto.builder()
                 .nombre(request.nombre())
-                .stockActual(request.stockActual())
+                .stockActual(request.stockActual() != null ? request.stockActual() : 0)
                 .precioVenta(request.precioVenta())
                 .receta(receta)
                 .activo(request.activo())
@@ -64,6 +61,11 @@ public class ProductoService {
         return ProductoResponse.desde(productoRepository.save(producto));
     }
 
+    /**
+     * Actualiza campos permitidos del producto SIN modificar stockActual.
+     * El stock sólo se mueve mediante Venta / Produccion o el endpoint dedicado
+     * de ajuste manual.
+     */
     @Transactional
     public ProductoResponse actualizar(Long id, ProductoRequest request) {
         Producto producto = productoRepository.findById(id)
@@ -74,17 +76,33 @@ public class ProductoService {
             throw new RecursoDuplicadoException("Producto", "nombre", request.nombre());
         }
 
-        Receta receta = null;
-        if (request.recetaId() != null) {
-            receta = recetaRepository.findById(request.recetaId())
-                    .orElseThrow(() -> new RecursoNoEncontradoException("Receta", request.recetaId()));
-        }
+        Receta receta = resolverReceta(request.recetaId());
 
         producto.setNombre(request.nombre());
-        producto.setStockActual(request.stockActual());
         producto.setPrecioVenta(request.precioVenta());
         producto.setReceta(receta);
         producto.setActivo(request.activo());
+        return ProductoResponse.desde(productoRepository.save(producto));
+    }
+
+    /**
+     * Ajuste manual de stock (auditable). Usar sólo para conciliaciones
+     * físicas / mermas — el flujo normal es Venta / Produccion.
+     */
+    @Transactional
+    public ProductoResponse ajustarStock(Long id, Integer delta, String motivo) {
+        if (delta == null || delta == 0) {
+            throw new OperacionInvalidaException("El delta de ajuste no puede ser cero");
+        }
+        Producto producto = productoRepository.findById(id)
+                .orElseThrow(() -> new RecursoNoEncontradoException("Producto", id));
+        int nuevo = producto.getStockActual() + delta;
+        if (nuevo < 0) {
+            throw new OperacionInvalidaException(
+                    "El ajuste dejaría el stock en negativo. Actual: " + producto.getStockActual() + ", delta: " + delta);
+        }
+        producto.setStockActual(nuevo);
+        // motivo se recibe para trazabilidad futura (auditoría), aún no persistido.
         return ProductoResponse.desde(productoRepository.save(producto));
     }
 
@@ -94,5 +112,11 @@ public class ProductoService {
             throw new RecursoNoEncontradoException("Producto", id);
         }
         productoRepository.deleteById(id);
+    }
+
+    private Receta resolverReceta(Long recetaId) {
+        if (recetaId == null) return null;
+        return recetaRepository.findById(recetaId)
+                .orElseThrow(() -> new RecursoNoEncontradoException("Receta", recetaId));
     }
 }

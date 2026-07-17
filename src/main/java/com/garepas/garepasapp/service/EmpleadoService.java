@@ -7,6 +7,7 @@ import com.garepas.garepasapp.dto.response.NominaResponse;
 import com.garepas.garepasapp.entity.Empleado;
 import com.garepas.garepasapp.entity.Gasto;
 import com.garepas.garepasapp.entity.Nomina;
+import com.garepas.garepasapp.enums.CategoriaGasto;
 import com.garepas.garepasapp.exception.OperacionInvalidaException;
 import com.garepas.garepasapp.exception.RecursoDuplicadoException;
 import com.garepas.garepasapp.exception.RecursoNoEncontradoException;
@@ -19,7 +20,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -29,15 +32,12 @@ public class EmpleadoService {
     private final NominaRepository nominaRepository;
     private final GastoRepository gastoRepository;
 
-    private EmpleadoResponse toResponse(Empleado empleado) {
-        Integer diasPagados = nominaRepository.sumDiasPagadosByEmpleadoId(empleado.getId());
-        return EmpleadoResponse.desde(empleado, diasPagados);
-    }
-
     @Transactional(readOnly = true)
     public List<EmpleadoResponse> listarTodos() {
-        return empleadoRepository.findAll().stream()
-                .map(this::toResponse)
+        List<Empleado> empleados = empleadoRepository.findAll();
+        Map<Long, Integer> diasPagadosPorEmpleado = cargarDiasPagados(empleados);
+        return empleados.stream()
+                .map(e -> EmpleadoResponse.desde(e, diasPagadosPorEmpleado.getOrDefault(e.getId(), 0)))
                 .toList();
     }
 
@@ -78,6 +78,7 @@ public class EmpleadoService {
 
     @Transactional
     public EmpleadoResponse agregarDias(Long id, Integer dias) {
+        if (dias == null || dias <= 0) throw new OperacionInvalidaException("Los días a agregar deben ser positivos");
         Empleado empleado = empleadoRepository.findById(id)
                 .orElseThrow(() -> new RecursoNoEncontradoException("Empleado", id));
         empleado.setDiasTrabajados(empleado.getDiasTrabajados() + dias);
@@ -86,6 +87,7 @@ public class EmpleadoService {
 
     @Transactional
     public EmpleadoResponse quitarDias(Long id, Integer dias) {
+        if (dias == null || dias <= 0) throw new OperacionInvalidaException("Los días a quitar deben ser positivos");
         Empleado empleado = empleadoRepository.findById(id)
                 .orElseThrow(() -> new RecursoNoEncontradoException("Empleado", id));
         int nuevo = empleado.getDiasTrabajados() - dias;
@@ -118,12 +120,12 @@ public class EmpleadoService {
         NominaResponse response = NominaResponse.desde(nominaRepository.save(nomina));
 
         BigDecimal montoTotal = empleado.getPrecioDia()
-                .multiply(java.math.BigDecimal.valueOf(request.diasPagados()));
+                .multiply(BigDecimal.valueOf(request.diasPagados()));
 
         Gasto gasto = Gasto.builder()
                 .descripcion("Pago nómina — " + empleado.getNombre() + " (" + request.diasPagados() + " día(s))")
                 .monto(montoTotal)
-                .categoria("Nómina y Personal")
+                .categoria(CategoriaGasto.NOMINA_PERSONAL)
                 .fecha(LocalDateTime.now())
                 .build();
 
@@ -141,5 +143,24 @@ public class EmpleadoService {
                 .stream()
                 .map(NominaResponse::desde)
                 .toList();
+    }
+
+    // ------------- helpers -------------
+
+    private EmpleadoResponse toResponse(Empleado empleado) {
+        Integer diasPagados = nominaRepository.sumDiasPagadosByEmpleadoId(empleado.getId());
+        return EmpleadoResponse.desde(empleado, diasPagados);
+    }
+
+    private Map<Long, Integer> cargarDiasPagados(List<Empleado> empleados) {
+        Map<Long, Integer> map = new HashMap<>();
+        if (empleados.isEmpty()) return map;
+        List<Long> ids = empleados.stream().map(Empleado::getId).toList();
+        for (Object[] row : nominaRepository.sumDiasPagadosGroupByEmpleadoIds(ids)) {
+            Long id = (Long) row[0];
+            Number sum = (Number) row[1];
+            map.put(id, sum == null ? 0 : sum.intValue());
+        }
+        return map;
     }
 }
