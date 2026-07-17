@@ -15,7 +15,7 @@ export default function App() {
       <div className="min-h-screen flex">
         <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
-        <div className="flex-1 flex flex-col w-full md:ml-64">
+        <div className="flex-1 flex flex-col w-full min-w-0 md:ml-64">
           {/* Top bar móvil */}
           <header className="sticky top-0 z-30 flex items-center gap-3 px-4 py-3 bg-[var(--brand-surface)]/90 backdrop-blur border-b border-[#f5e2af] md:hidden">
             <button
@@ -27,7 +27,7 @@ export default function App() {
             <span className="brand-display text-lg text-[var(--brand-ink)]">Gordo Arepas</span>
           </header>
 
-          <main className="flex-1 p-4 md:p-8">
+          <main className="flex-1 min-w-0 p-4 md:p-8">
             <Routes>
               <Route path="/" element={<Dashboard />} />
               <Route path="/gestion" element={<Gestion />} />
