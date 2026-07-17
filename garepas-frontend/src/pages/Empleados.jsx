@@ -136,7 +136,8 @@ export default function Empleados({ embedded = false }) {
       )}
 
       <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
-        <table className="w-full text-sm">
+        <div className="overflow-x-auto">
+        <table className="w-full text-sm min-w-[760px]">
           <thead>
             <tr className="border-b border-gray-100">
               <th className="text-left px-5 py-3.5 text-xs font-semibold text-gray-400 uppercase">Nombre</th>
@@ -214,6 +215,7 @@ export default function Empleados({ embedded = false }) {
             )}
           </tbody>
         </table>
+        </div>
       </div>
 
       {/* Modal empleado */}
