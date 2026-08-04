@@ -69,12 +69,6 @@ public class VentaService {
                 throw new OperacionInvalidaException(
                         "El producto '" + producto.getNombre() + "' no está activo");
             }
-            if (producto.getStockActual() < detalleRequest.cantidad()) {
-                throw new OperacionInvalidaException(
-                        "Stock insuficiente para el producto '" + producto.getNombre() +
-                                "'. Disponible: " + producto.getStockActual() +
-                                ", Solicitado: " + detalleRequest.cantidad());
-            }
 
             // Precio del servidor (snapshot); no confiar en el cliente.
             BigDecimal precioUnitario = producto.getPrecioVenta();
