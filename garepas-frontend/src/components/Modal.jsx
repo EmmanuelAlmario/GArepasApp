@@ -2,6 +2,11 @@ import { useEffect, useRef } from 'react'
 
 export default function Modal({ title, onClose, children }) {
   const panelRef = useRef(null)
+  const onCloseRef = useRef(onClose)
+
+  useEffect(() => {
+    onCloseRef.current = onClose
+  })
 
   useEffect(() => {
     const panel = panelRef.current
@@ -18,7 +23,7 @@ export default function Modal({ title, onClose, children }) {
     const handleKey = (e) => {
       if (e.key === 'Escape') {
         e.stopPropagation()
-        onClose?.()
+        onCloseRef.current?.()
         return
       }
       if (e.key !== 'Tab') return
@@ -41,7 +46,7 @@ export default function Modal({ title, onClose, children }) {
       document.removeEventListener('keydown', handleKey)
       if (prevFocused instanceof HTMLElement) prevFocused.focus()
     }
-  }, [onClose])
+  }, [])
 
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
