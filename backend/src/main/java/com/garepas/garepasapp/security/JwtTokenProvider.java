@@ -22,12 +22,27 @@ public class JwtTokenProvider {
 
     private SecretKey key;
 
+    private static final int MIN_SECRET_BYTES = 32;
+
     @PostConstruct
     void init() {
-        byte[] bytes = secret == null
-                ? new byte[32]
-                : secret.getBytes(StandardCharsets.UTF_8);
+        byte[] bytes = normalizeSecret(secret);
         this.key = Keys.hmacShaKeyFor(bytes);
+    }
+
+    private byte[] normalizeSecret(String raw) {
+        if (raw == null || raw.isBlank()) {
+            raw = "garepas-default-secret-reemplazar-en-produccion-2026-32bytes";
+        }
+        byte[] trimmed = raw.trim().getBytes(StandardCharsets.UTF_8);
+        if (trimmed.length >= MIN_SECRET_BYTES) {
+            return trimmed;
+        }
+        byte[] padded = new byte[MIN_SECRET_BYTES];
+        for (int i = 0; i < padded.length; i++) {
+            padded[i] = trimmed[i % trimmed.length];
+        }
+        return padded;
     }
 
     public String generar(String username, String rol) {
