@@ -62,9 +62,8 @@ public class ProductoService {
     }
 
     /**
-     * Actualiza campos permitidos del producto SIN modificar stockActual.
-     * El stock sólo se mueve mediante Venta / Produccion o el endpoint dedicado
-     * de ajuste manual.
+     * Actualiza los campos permitidos del producto, incluyendo un ajuste manual de
+     * stockActual (el formulario lo envía siempre con el valor actual del producto).
      */
     @Transactional
     public ProductoResponse actualizar(Long id, ProductoRequest request) {
@@ -81,6 +80,7 @@ public class ProductoService {
         producto.setNombre(request.nombre());
         producto.setPrecioVenta(request.precioVenta());
         producto.setReceta(receta);
+        producto.setStockActual(request.stockActual());
         producto.setActivo(request.activo());
         return ProductoResponse.desde(productoRepository.save(producto));
     }
