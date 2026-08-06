@@ -23,7 +23,7 @@ api.interceptors.request.use((config) => {
 api.interceptors.response.use(
   (res) => res,
   (err) => {
-    if (err.response?.status === 401 && err.config?.url !== '/auth/login') {
+    if (err.response?.status === 401 && err.config?.url !== '/api/auth/login') {
       localStorage.removeItem('garepas_auth')
       if (window.location.pathname !== '/login') {
         window.location.href = '/login'

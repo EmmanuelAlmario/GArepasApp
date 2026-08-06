@@ -1,6 +1,6 @@
 import api from './axios'
 
-export const login = (data) => api.post('/auth/login', data)
+export const login = (data) => api.post('/api/auth/login', data)
 
 const AUTH_KEY = 'garepas_auth'
 

@@ -1,8 +1,8 @@
 import api from './axios'
 
-export const getInsumos = () => api.get('/insumos')
-export const getInsumoById = (id) => api.get(`/insumos/${id}`)
-export const createInsumo = (data) => api.post('/insumos', data)
-export const updateInsumo = (id, data) => api.put(`/insumos/${id}`, data)
-export const deleteInsumo = (id) => api.delete(`/insumos/${id}`)
-export const ajustarStock = (data) => api.post('/insumos/ajustar-stock', data)
+export const getInsumos = () => api.get('/api/insumos')
+export const getInsumoById = (id) => api.get(`/api/insumos/${id}`)
+export const createInsumo = (data) => api.post('/api/insumos', data)
+export const updateInsumo = (id, data) => api.put(`/api/insumos/${id}`, data)
+export const deleteInsumo = (id) => api.delete(`/api/insumos/${id}`)
+export const ajustarStock = (data) => api.post('/api/insumos/ajustar-stock', data)
