@@ -7,6 +7,7 @@ import com.garepas.garepasapp.entity.Producto;
 import com.garepas.garepasapp.entity.Venta;
 import com.garepas.garepasapp.exception.OperacionInvalidaException;
 import com.garepas.garepasapp.exception.RecursoNoEncontradoException;
+import com.garepas.garepasapp.repository.JornadaRepository;
 import com.garepas.garepasapp.repository.ProductoRepository;
 import com.garepas.garepasapp.repository.VentaRepository;
 import lombok.RequiredArgsConstructor;
@@ -26,6 +27,7 @@ public class VentaService {
 
     private final VentaRepository ventaRepository;
     private final ProductoRepository productoRepository;
+    private final JornadaRepository jornadaRepository;
 
     @Transactional(readOnly = true)
     public List<VentaResponse> listarTodas() {
@@ -56,6 +58,7 @@ public class VentaService {
         Venta venta = Venta.builder()
                 .fecha(LocalDateTime.now())
                 .total(BigDecimal.ZERO)
+                .jornadaId(obtenerJornadaActivaId())
                 .build();
 
         List<DetalleVenta> detalles = new ArrayList<>();
@@ -111,5 +114,11 @@ public class VentaService {
         }
 
         ventaRepository.deleteById(id);
+    }
+
+    private Long obtenerJornadaActivaId() {
+        return jornadaRepository.findFirstByActivaTrueOrderByFechaAperturaDesc()
+                .map(com.garepas.garepasapp.entity.Jornada::getId)
+                .orElse(null);
     }
 }

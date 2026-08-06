@@ -59,6 +59,7 @@ public class InsumoService {
                 .categoria(request.categoria())
                 .marca(request.marca())
                 .stockActual(request.stockActual())
+                .stockMinimo(request.stockMinimo())
                 .precioPorGramo(request.precioPorGramo())
                 .unidadMedida(request.unidadMedida())
                 .activo(request.activo())
@@ -78,6 +79,7 @@ public class InsumoService {
         insumo.setCategoria(request.categoria());
         insumo.setMarca(request.marca());
         insumo.setStockActual(request.stockActual());
+        insumo.setStockMinimo(request.stockMinimo());
         insumo.setPrecioPorGramo(request.precioPorGramo());
         insumo.setUnidadMedida(request.unidadMedida());
         insumo.setActivo(request.activo());

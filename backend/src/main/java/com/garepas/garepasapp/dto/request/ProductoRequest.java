@@ -13,6 +13,9 @@ public record ProductoRequest(
         @Min(value = 0, message = "El stock no puede ser negativo")
         Integer stockActual,
 
+        @Min(value = 0, message = "El stock mínimo no puede ser negativo")
+        Integer stockMinimo,
+
         @NotNull(message = "El precio de venta es obligatorio")
         @DecimalMin(value = "0.0", inclusive = false, message = "El precio debe ser mayor a cero")
         BigDecimal precioVenta,

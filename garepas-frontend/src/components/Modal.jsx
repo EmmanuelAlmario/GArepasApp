@@ -52,16 +52,16 @@ export default function Modal({ title, onClose, children }) {
         aria-modal="true"
         aria-label={title}
         tabIndex={-1}
-        className="relative bg-[var(--brand-surface)] rounded-t-2xl sm:rounded-2xl shadow-2xl w-full max-w-lg mx-0 sm:mx-4 max-h-[92vh] overflow-y-auto border border-[#f4d177] outline-none"
+        className="relative card-soft rounded-t-2xl sm:rounded-2xl shadow-2xl w-full max-w-lg mx-0 sm:mx-4 max-h-[92vh] overflow-y-auto outline-none"
       >
         <div className="h-1.5 brand-gradient" />
-        <div className="flex items-center justify-between px-5 sm:px-6 py-4 border-b border-[#f5e6be]">
-          <h3 className="text-base font-extrabold text-[var(--brand-ink)]">{title}</h3>
+        <div className="flex items-center justify-between px-5 sm:px-6 py-4 border-b border-[var(--border)]">
+          <h3 className="text-base font-extrabold" style={{ color: 'var(--ink)' }}>{title}</h3>
           <button
             type="button"
             onClick={onClose}
             aria-label="Cerrar"
-            className="text-[var(--brand-ink)]/50 hover:text-[var(--brand-red)] transition-colors text-xl leading-none"
+            className="text-[var(--muted)] hover:text-[var(--brand-red)] transition-colors text-xl leading-none"
           >
             ×
           </button>

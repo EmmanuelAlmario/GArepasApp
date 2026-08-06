@@ -14,6 +14,7 @@ import {
   registrarPago,
   getHistorial,
 } from '../api/empleados'
+import { downloadCSV } from '../utils/export'
 import toast from 'react-hot-toast'
 
 const inicialForm = { nombre: '', precioDia: '', activo: true }
@@ -124,10 +125,21 @@ export default function Empleados({ embedded = false }) {
     },
   ]
 
+  const exportarCSV = () =>
+    downloadCSV('empleados', [
+      { label: 'Nombre', key: 'nombre' },
+      { label: 'Precio/día', get: (v) => Number(v.precioDia) },
+      { label: 'Días trabajados', key: 'diasTrabajados' },
+      { label: 'Estado', get: (v) => (v.activo ? 'Activo' : 'Inactivo') },
+    ], empleados)
+
   return (
     <div>
       {!embedded && (
         <PageHeader title="Empleados">
+          <Button variant="secondary" onClick={exportarCSV} disabled={empleados.length === 0}>
+            Descargar CSV
+          </Button>
           <Button onClick={() => { setForm(inicialForm); setEditando(null); setModalEmpleado(true) }}>
             + Registrar empleado
           </Button>

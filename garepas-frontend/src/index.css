@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Bagel+Fat+One&family=Nunito:wght@400;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Bagel+Fat+One&family=Nunito:wght@400;600;700;800;900&family=Sora:wght@500;600;700;800&display=swap');
 
 @import "tailwindcss";
 
@@ -7,24 +7,102 @@
   --brand-yellow-soft: #ffe38a;
   --brand-orange: #f28c28;
   --brand-red: #c0392b;
-  --brand-ink: #3e2a1e;
-  --brand-cream: #fff6e1;
-  --brand-surface: #fffdf7;
   --brand-success: #6a9a3f;
   --brand-danger: #b02a20;
+
+  --bg: #fff6e1;
+  --panel: #fffdf7;
+  --panel-2: #ffffff;
+  --ink: #3e2a1e;
+  --ink-soft: #5c4636;
+  --muted: rgba(62, 42, 30, 0.62);
+  --border: #f5e2af;
+  --border-strong: #e9d29a;
+  --shadow: 0 1px 2px rgba(62, 42, 30, 0.05), 0 10px 30px -14px rgba(62, 42, 30, 0.18);
+}
+
+[data-theme="dark"] {
+  --bg: #151009;
+  --panel: #221a12;
+  --panel-2: #2a2118;
+  --ink: #f7e8d3;
+  --ink-soft: #e8d5ba;
+  --muted: rgba(247, 232, 211, 0.58);
+  --border: #3b2f22;
+  --border-strong: #574430;
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 14px 32px -14px rgba(0, 0, 0, 0.55);
 }
 
 body {
   font-family: 'Nunito', sans-serif;
-  color: var(--brand-ink);
-  background: radial-gradient(circle at top left, #fff4bf, #fff6e1 40%, #fffdf7);
+  color: var(--ink);
+  background:
+    radial-gradient(circle at top left, var(--brand-yellow-soft), transparent 40%),
+    radial-gradient(circle at bottom right, rgba(242, 140, 40, 0.18), transparent 45%),
+    var(--bg);
+  background-attachment: fixed;
+  transition: background 0.3s ease, color 0.3s ease;
 }
 
 .brand-display {
   font-family: 'Bagel Fat One', system-ui;
   letter-spacing: 0.3px;
+  color: var(--ink);
+}
+
+.font-display {
+  font-family: 'Bagel Fat One', cursive;
+}
+
+.font-num {
+  font-family: 'Sora', sans-serif;
 }
 
 .brand-gradient {
   background: linear-gradient(180deg, var(--brand-orange) 0%, var(--brand-red) 100%);
+}
+
+/* Tarjeta reutilizable con tema */
+.card {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 1rem;
+  box-shadow: var(--shadow);
+}
+
+.card-soft {
+  background: var(--panel-2);
+  border: 1px solid var(--border);
+  border-radius: 1rem;
+  box-shadow: var(--shadow);
+}
+
+.muted {
+  color: var(--muted);
+}
+
+/* Skeleton shimmer */
+.skeleton {
+  background: linear-gradient(90deg, var(--border) 25%, var(--panel-2) 50%, var(--border) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.4s infinite;
+  border-radius: 0.5rem;
+}
+
+@keyframes shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* Scrollbar sutil */
+*::-webkit-scrollbar {
+  width: 9px;
+  height: 9px;
+}
+*::-webkit-scrollbar-thumb {
+  background: var(--border-strong);
+  border-radius: 6px;
+}
+*::-webkit-scrollbar-thumb:hover {
+  background: var(--brand-orange);
 }

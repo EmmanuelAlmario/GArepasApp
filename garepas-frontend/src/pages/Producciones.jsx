@@ -6,6 +6,7 @@ import Button from '../components/Button'
 import FormField from '../components/FormField'
 import { getProducciones, createProduccion, verificarProduccion, deleteProduccion } from '../api/producciones'
 import { getProductos } from '../api/productos'
+import { downloadCSV, fechaCSV } from '../utils/export'
 import { fmtCantidad } from '../utils/unidades'
 import toast from 'react-hot-toast'
 
@@ -147,11 +148,25 @@ export default function Producciones() {
     },
   ]
 
+  const exportarCSV = () =>
+    downloadCSV('producciones', [
+      { label: 'No.', get: (v) => `#${v.id}` },
+      { label: 'Producto', key: 'productoNombre' },
+      { label: 'Cantidad', key: 'cantidad' },
+      { label: 'Costo total', get: (v) => Number(v.costoTotal) },
+      { label: 'Costo unitario', get: (v) => Number(v.costoUnitario) },
+      { label: 'Estado', get: (v) => (v.estado === 'COMPLETADA' ? 'SUFICIENTE' : 'INSUFICIENTE') },
+      { label: 'Fecha', get: (v) => fechaCSV(v.fecha) },
+    ], producciones)
+
   const productoOpts = productos.map((p) => ({ value: p.id, label: p.nombre }))
 
   return (
     <div>
       <PageHeader title="Producciones">
+        <Button variant="secondary" onClick={exportarCSV} disabled={producciones.length === 0}>
+          Descargar CSV
+        </Button>
         <Button onClick={() => { setForm(inicial); setModal(true) }}>
           + Registrar producción
         </Button>

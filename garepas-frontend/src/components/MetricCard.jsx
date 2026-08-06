@@ -1,17 +1,37 @@
-export default function MetricCard({ label, value, sub, color = 'blue' }) {
-  const bar = {
-    blue: 'bg-[var(--brand-orange)]',
-    green: 'bg-[var(--brand-success)]',
-    yellow: 'bg-[var(--brand-yellow)]',
-    red: 'bg-[var(--brand-danger)]',
-  }
+import { motion } from 'framer-motion'
 
+const STYLES = {
+  blue: { icon: 'brand-gradient', ring: 'from-orange-500/30 to-red-500/30' },
+  green: { icon: 'bg-[var(--brand-success)]', ring: 'from-green-500/30 to-emerald-500/30' },
+  red: { icon: 'bg-[var(--brand-danger)]', ring: 'from-red-500/30 to-red-400/30' },
+  yellow: { icon: 'bg-[var(--brand-yellow)] text-[var(--brand-ink)]', ring: 'from-yellow-400/40 to-orange-400/30' },
+}
+
+export default function MetricCard({ label, value, sub, icon, color = 'blue', index = 0, children }) {
+  const s = STYLES[color] ?? STYLES.blue
   return (
-    <div className="bg-[var(--brand-surface)] rounded-xl p-5 shadow-sm border border-[#f5e2af] relative overflow-hidden">
-      <div className={`absolute top-0 left-0 right-0 h-0.5 ${bar[color]}`} />
-      <p className="text-xs text-[var(--brand-ink)]/60 font-bold tracking-wide uppercase mb-2">{label}</p>
-      <p className="text-3xl font-extrabold text-[var(--brand-ink)]">{value}</p>
-      {sub && <p className="text-xs text-[var(--brand-ink)]/60 mt-1">{sub}</p>}
-    </div>
+    <motion.div
+      initial={{ opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.35, delay: index * 0.05, ease: 'easeOut' }}
+      className="card relative overflow-hidden p-5"
+    >
+      <div className={`absolute -right-8 -top-8 w-28 h-28 rounded-full bg-gradient-to-br ${s.ring} blur-2xl`} />
+      <div className="relative flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <p className="text-xs font-bold uppercase tracking-wide text-[var(--muted)] mb-2">{label}</p>
+          <p className="font-num text-3xl font-extrabold leading-none" style={{ color: 'var(--ink)' }}>
+            {value}
+          </p>
+          {sub && <p className="text-xs text-[var(--muted)] mt-1.5">{sub}</p>}
+        </div>
+        {icon && (
+          <div className={`shrink-0 w-11 h-11 rounded-xl flex items-center justify-center text-white shadow-lg ${s.icon}`}>
+            {icon}
+          </div>
+        )}
+      </div>
+      {children && <div className="relative mt-3">{children}</div>}
+    </motion.div>
   )
 }

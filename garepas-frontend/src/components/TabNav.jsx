@@ -2,7 +2,7 @@ import { motion } from 'framer-motion'
 
 export default function TabNav({ tabs, active, onChange }) {
   return (
-    <div className="bg-[var(--brand-surface)] rounded-xl border border-[#f5e2af] p-1.5 mb-6 overflow-x-auto">
+    <div className="card p-1.5 mb-6 overflow-x-auto">
       <div className="flex gap-1 min-w-max">
         {tabs.map((tab) => {
           const selected = tab.value === active

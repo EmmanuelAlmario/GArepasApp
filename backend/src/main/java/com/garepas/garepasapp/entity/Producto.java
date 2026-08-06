@@ -27,6 +27,10 @@ public class Producto {
     @Column(nullable = false)
     private Integer stockActual;
 
+    /** Umbral opcional para alerta de stock bajo. null = sin alerta. */
+    @Column
+    private Integer stockMinimo;
+
     @Column(nullable = false, precision = 12, scale = 2)
     private BigDecimal precioVenta;
 

@@ -32,6 +32,10 @@ public class Insumo {
     @Column(nullable = false, precision = 15, scale = 4)
     private BigDecimal stockActual;
 
+    /** Umbral opcional para alerta de stock bajo. null = sin alerta. */
+    @Column(precision = 15, scale = 4)
+    private BigDecimal stockMinimo;
+
     /**
      * Precio por unidad base (gramo o mililitro o unidad). Se guarda con
      * precisión fina porque puede ser una fracción pequeña ($0.0125/g).

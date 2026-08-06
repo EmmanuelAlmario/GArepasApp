@@ -22,6 +22,9 @@ public record InsumoRequest(
         @DecimalMin(value = "0.0", message = "El stock no puede ser negativo")
         BigDecimal stockActual,
 
+        @DecimalMin(value = "0.0", message = "El stock mínimo no puede ser negativo")
+        BigDecimal stockMinimo,
+
         @NotNull(message = "El precio por gramo es obligatorio")
         @DecimalMin(value = "0.0", inclusive = false, message = "El precio debe ser mayor a cero")
         BigDecimal precioPorGramo,

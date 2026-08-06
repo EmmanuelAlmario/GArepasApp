@@ -54,6 +54,7 @@ public class ProductoService {
         Producto producto = Producto.builder()
                 .nombre(request.nombre())
                 .stockActual(request.stockActual() != null ? request.stockActual() : 0)
+                .stockMinimo(request.stockMinimo())
                 .precioVenta(request.precioVenta())
                 .receta(receta)
                 .activo(request.activo())
@@ -81,6 +82,7 @@ public class ProductoService {
         producto.setPrecioVenta(request.precioVenta());
         producto.setReceta(receta);
         producto.setStockActual(request.stockActual());
+        producto.setStockMinimo(request.stockMinimo());
         producto.setActivo(request.activo());
         return ProductoResponse.desde(productoRepository.save(producto));
     }

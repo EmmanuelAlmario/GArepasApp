@@ -10,6 +10,8 @@ public record ProductoResponse(
         Long id,
         String nombre,
         Integer stockActual,
+        Integer stockMinimo,
+        Boolean stockBajo,
         BigDecimal precioVenta,
         Long recetaId,
         String recetaNombre,
@@ -27,10 +29,14 @@ public record ProductoResponse(
                 ? margen.multiply(BigDecimal.valueOf(100))
                         .divide(precioVenta, 2, RoundingMode.HALF_UP)
                 : BigDecimal.ZERO;
+        Integer min = producto.getStockMinimo();
+        boolean bajo = min != null && producto.getStockActual() != null && producto.getStockActual() < min;
         return new ProductoResponse(
                 producto.getId(),
                 producto.getNombre(),
                 producto.getStockActual(),
+                min,
+                bajo,
                 precioVenta,
                 receta != null ? receta.getId() : null,
                 receta != null ? receta.getNombre() : null,

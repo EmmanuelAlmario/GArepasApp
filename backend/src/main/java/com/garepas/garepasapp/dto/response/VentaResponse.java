@@ -9,6 +9,7 @@ public record VentaResponse(
         Long id,
         LocalDateTime fecha,
         BigDecimal total,
+        Long jornadaId,
         List<DetalleVentaResponse> detalles
 ) {
     public static VentaResponse desde(Venta venta) {
@@ -16,6 +17,7 @@ public record VentaResponse(
                 venta.getId(),
                 venta.getFecha(),
                 venta.getTotal(),
+                venta.getJornadaId(),
                 venta.getDetalles().stream()
                         .map(DetalleVentaResponse::desde)
                         .toList()

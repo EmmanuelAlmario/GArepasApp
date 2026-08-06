@@ -4,7 +4,7 @@ import DataTable from '../components/DataTable'
 import Modal from '../components/Modal'
 import Button from '../components/Button'
 import FormField from '../components/FormField'
-import StatusBadge from '../components/StatusBadge'
+import StatusBadge, { BadgePill } from '../components/StatusBadge'
 import { getInsumos, createInsumo, updateInsumo, deleteInsumo, ajustarStock } from '../api/insumos'
 import { aUnidadBase, unidadBase, fmtCantidad } from '../utils/unidades'
 import toast from 'react-hot-toast'
@@ -19,6 +19,7 @@ const inicial = {
   categoria: '',
   marca: '',
   stockActual: '',
+  stockMinimo: '',
   precioCompra: '',
   unidadMedida: '',
   activo: true,
@@ -98,6 +99,9 @@ export default function Insumos({ embedded = false }) {
       categoria: form.categoria,
       marca: form.marca,
       stockActual: aUnidadBase(Number(form.stockActual), form.unidadMedida),
+      stockMinimo: form.stockMinimo !== '' && form.stockMinimo != null
+        ? aUnidadBase(Number(form.stockMinimo), form.unidadMedida)
+        : null,
       precioPorGramo: precioPorGramoCalculado,
       unidadMedida: unidadBase(form.unidadMedida),
       activo: form.activo,
@@ -202,7 +206,14 @@ export default function Insumos({ embedded = false }) {
     { key: 'marca', label: 'Marca' },
     {
       key: 'stockActual', label: 'Stock',
-      render: (v, row) => fmtCantidad(v, row.unidadMedida),
+      render: (v, row) => (
+        <div className="flex items-center gap-2">
+          <span>{fmtCantidad(v, row.unidadMedida)}</span>
+          {row.stockBajo && (
+            <BadgePill tone="red">Bajo</BadgePill>
+          )}
+        </div>
+      ),
     },
     {
       key: 'precioPorGramo', label: 'Precio/g o ml',
@@ -264,6 +275,15 @@ export default function Insumos({ embedded = false }) {
                 required
               />
             </div>
+
+            <FormField
+              label="Stock mínimo (alerta)"
+              name="stockMinimo"
+              type="number"
+              value={form.stockMinimo ?? ''}
+              onChange={handleChange}
+              placeholder="Opcional: avisa cuando el stock baje de aquí"
+            />
 
             {form.unidadMedida && form.stockActual && form.unidadMedida !== unidadBase(form.unidadMedida) && (
               <p className="text-xs text-gray-400 -mt-2">

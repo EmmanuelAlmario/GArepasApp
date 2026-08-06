@@ -26,6 +26,10 @@ public class Venta {
     @Column(nullable = false, precision = 12, scale = 2)
     private BigDecimal total;
 
+    /** Jornada de operación a la que pertenece esta venta (null = fuera de jornada). */
+    @Column(name = "jornada_id")
+    private Long jornadaId;
+
     @OneToMany(mappedBy = "venta", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
     private java.util.List<DetalleVenta> detalles = new java.util.ArrayList<>();

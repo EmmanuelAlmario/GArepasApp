@@ -6,6 +6,7 @@ import Button from '../components/Button'
 import FormField from '../components/FormField'
 import { getGastos, createGasto, updateGasto, deleteGasto } from '../api/gastos'
 import { CATEGORIAS_GASTO } from '../constants/categoriasGasto'
+import { downloadCSV, fechaCSV } from '../utils/export'
 import toast from 'react-hot-toast'
 
 const inicial = { descripcion: '', monto: '', categoria: '' }
@@ -68,6 +69,15 @@ export default function Gastos({ embedded = false }) {
   const fmt = (n) =>
     new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(n)
 
+  const exportarCSV = () =>
+    downloadCSV('gastos', [
+      { label: 'No.', get: (v) => `#${v.id}` },
+      { label: 'Descripción', key: 'descripcion' },
+      { label: 'Categoría', key: 'categoria' },
+      { label: 'Fecha', get: (v) => fechaCSV(v.fecha) },
+      { label: 'Monto', get: (v) => Number(v.monto) },
+    ], gastos)
+
   const columns = [
     { key: 'id', label: '#', render: (v) => `#${v}` },
     { key: 'descripcion', label: 'Descripción' },
@@ -83,6 +93,9 @@ export default function Gastos({ embedded = false }) {
     <div>
       {!embedded && (
         <PageHeader title="Gastos">
+          <Button variant="secondary" onClick={exportarCSV} disabled={gastos.length === 0}>
+            Descargar CSV
+          </Button>
           <Button onClick={() => { setForm(inicial); setEditando(null); setModal(true) }}>
             + Registrar gasto
           </Button>

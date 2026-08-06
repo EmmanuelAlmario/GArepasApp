@@ -4,13 +4,13 @@ import DataTable from '../components/DataTable'
 import Modal from '../components/Modal'
 import Button from '../components/Button'
 import FormField from '../components/FormField'
-import StatusBadge from '../components/StatusBadge'
+import StatusBadge, { BadgePill } from '../components/StatusBadge'
 import { getProductos, createProducto, updateProducto, deleteProducto } from '../api/productos'
 import { getRecetas } from '../api/recetas'
 import { getCostoReceta, getSugerenciaPrecio } from '../api/costos'
 import toast from 'react-hot-toast'
 
-const inicial = { nombre: '', stockActual: '', precioVenta: '', recetaId: '', activo: true }
+const inicial = { nombre: '', stockActual: '', stockMinimo: '', precioVenta: '', recetaId: '', activo: true }
 const fmt = (n) =>
   new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(n || 0)
 
@@ -43,6 +43,7 @@ export default function Productos({ embedded = false }) {
     const payload = {
       ...form,
       stockActual: Number(form.stockActual),
+      stockMinimo: form.stockMinimo !== '' && form.stockMinimo != null ? Number(form.stockMinimo) : null,
       precioVenta: Number(form.precioVenta),
       recetaId: form.recetaId ? Number(form.recetaId) : null,
     }
@@ -95,7 +96,15 @@ export default function Productos({ embedded = false }) {
 
   const columns = [
     { key: 'nombre', label: 'Nombre' },
-    { key: 'stockActual', label: 'Stock' },
+    {
+      key: 'stockActual', label: 'Stock',
+      render: (v, row) => (
+        <div className="flex items-center gap-2">
+          <span>{v}</span>
+          {row.stockBajo && <BadgePill tone="red">Bajo</BadgePill>}
+        </div>
+      ),
+    },
     { key: 'precioVenta', label: 'Precio venta', render: (v) => fmt(v) },
     { key: 'costoUnitario', label: 'Costo unitario', render: (v) => fmt(v) },
     { key: 'margenPorcentaje', label: 'Margen %', render: (v) => `${Number(v || 0).toFixed(1)}%` },
@@ -132,6 +141,14 @@ export default function Productos({ embedded = false }) {
               <FormField label="Stock actual" name="stockActual" type="number" value={form.stockActual} onChange={handleChange} required />
               <FormField label="Precio de venta" name="precioVenta" type="number" value={form.precioVenta} onChange={handleChange} required />
             </div>
+            <FormField
+              label="Stock mínimo (alerta)"
+              name="stockMinimo"
+              type="number"
+              value={form.stockMinimo ?? ''}
+              onChange={handleChange}
+              placeholder="Opcional: avisa cuando el stock baje de aquí"
+            />
             <FormField label="Receta (opcional)" name="recetaId" type="select" value={form.recetaId} onChange={handleChange} options={recetaOpts} />
             {form.recetaId && (
               <div className="bg-[#fff0c7] border border-[#f6d375] rounded-lg px-4 py-3 flex items-center justify-between">
