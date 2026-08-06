@@ -1,7 +1,13 @@
 import axios from 'axios'
 
+// Normaliza el host para que no se duplique el prefijo "/api":
+// si VITE_API_URL ya trae "/api" (p.ej. ".../api"), se recorta para
+// que las rutas del frontend ("/api/usuarios", etc.) queden únicas.
+const rawBase = import.meta.env.VITE_API_URL ?? 'https://garepasapp-production.up.railway.app'
+const baseURL = rawBase.replace(/\/api\/?$/, '')
+
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL ?? 'https://garepasapp-production.up.railway.app',
+  baseURL,
   headers: {
     'Content-Type': 'application/json',
   },
