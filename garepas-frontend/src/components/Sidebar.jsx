@@ -1,14 +1,16 @@
 import { NavLink } from 'react-router-dom'
-import { LayoutDashboard, ClipboardList, ShoppingCart, Factory, X } from 'lucide-react'
+import { LayoutDashboard, ClipboardList, ShoppingCart, Factory, X, LogOut } from 'lucide-react'
 
-const links = [
-  { to: '/', label: 'Dashboard', icon: <LayoutDashboard size={16} /> },
-  { to: '/gestion', label: 'Gestion', icon: <ClipboardList size={16} /> },
-  { to: '/ventas', label: 'Ventas', icon: <ShoppingCart size={16} /> },
-  { to: '/producciones', label: 'Producciones', icon: <Factory size={16} /> },
+const ALL_LINKS = [
+  { to: '/', label: 'Dashboard', icon: <LayoutDashboard size={16} />, roles: ['ADMIN'] },
+  { to: '/gestion', label: 'Gestion', icon: <ClipboardList size={16} />, roles: ['ADMIN'] },
+  { to: '/ventas', label: 'Ventas', icon: <ShoppingCart size={16} />, roles: ['ADMIN', 'VENTAS'] },
+  { to: '/producciones', label: 'Producciones', icon: <Factory size={16} />, roles: ['ADMIN'] },
 ]
 
-export default function Sidebar({ open, onClose }) {
+export default function Sidebar({ open, onClose, rol, onLogout }) {
+  const links = ALL_LINKS.filter((l) => l.roles.includes(rol))
+
   return (
     <>
       {/* Backdrop móvil */}
@@ -65,16 +67,27 @@ export default function Sidebar({ open, onClose }) {
 
         <div className="px-4 py-4 border-t border-white/10 bg-black/10">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-full brand-gradient flex items-center justify-center text-white text-xs font-bold">
-              G
+            <div className="w-9 h-9 rounded-full brand-gradient flex items-center justify-center text-white text-xs font-bold uppercase">
+              {rol ? rol.slice(0, 1) : '?'}
             </div>
-            <div>
-              <p className="text-white text-sm font-medium leading-none">Gordo Arepas</p>
-              <p className="text-white/50 text-xs mt-0.5">Operacion diaria</p>
+            <div className="flex-1 min-w-0">
+              <p className="text-white text-sm font-medium leading-none truncate">{rol}</p>
+              <p className="text-white/50 text-xs mt-0.5">{rolEtiqueta(rol)}</p>
             </div>
+            <button
+              onClick={onLogout}
+              title="Cerrar sesión"
+              aria-label="Cerrar sesión"
+              className="text-white/60 hover:text-white transition-colors"
+            >
+              <LogOut size={18} />
+            </button>
           </div>
         </div>
       </aside>
     </>
   )
 }
+
+const rolEtiqueta = (rol) =>
+  rol === 'ADMIN' ? 'Administrador' : rol === 'VENTAS' ? 'Registrador de ventas' : 'Operación diaria'

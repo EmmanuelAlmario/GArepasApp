@@ -6,16 +6,22 @@ import Button from '../components/Button'
 import FormField from '../components/FormField'
 import { getGastos, createGasto, updateGasto, deleteGasto } from '../api/gastos'
 import { CATEGORIAS_GASTO } from '../constants/categoriasGasto'
+import toast from 'react-hot-toast'
 
 const inicial = { descripcion: '', monto: '', categoria: '' }
 
 export default function Gastos({ embedded = false }) {
   const [gastos, setGastos] = useState([])
+  const [cargando, setCargando] = useState(true)
   const [modal, setModal] = useState(false)
   const [form, setForm] = useState(inicial)
   const [editando, setEditando] = useState(null)
 
-  const cargar = () => getGastos().then((r) => setGastos(r.data)).catch(console.error)
+  const cargar = () =>
+    getGastos()
+      .then((r) => setGastos(r.data))
+      .catch(console.error)
+      .finally(() => setCargando(false))
 
   useEffect(() => { cargar() }, [])
 
@@ -38,7 +44,7 @@ export default function Gastos({ embedded = false }) {
       setEditando(null)
       cargar()
     } catch (err) {
-      alert(err.response?.data?.mensaje ?? 'Error al guardar')
+      toast.error(err.response?.data?.mensaje ?? 'Error al guardar')
     }
   }
 
@@ -53,8 +59,9 @@ export default function Gastos({ embedded = false }) {
     try {
       await deleteGasto(id)
       cargar()
+      toast.success('Gasto eliminado.')
     } catch (err) {
-      alert(err.response?.data?.mensaje ?? 'Error al eliminar')
+      toast.error(err.response?.data?.mensaje ?? 'Error al eliminar')
     }
   }
 
@@ -89,7 +96,7 @@ export default function Gastos({ embedded = false }) {
         </div>
       )}
 
-      <DataTable columns={columns} data={gastos} onEdit={handleEditar} onDelete={handleEliminar} />
+      <DataTable columns={columns} data={gastos} onEdit={handleEditar} onDelete={handleEliminar} loading={cargando} />
 
       {modal && (
         <Modal title={editando ? 'Editar gasto' : 'Registrar gasto'} onClose={() => setModal(false)}>

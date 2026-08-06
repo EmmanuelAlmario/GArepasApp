@@ -2,6 +2,7 @@ package com.garepas.garepasapp.dto.response;
 
 import com.garepas.garepasapp.entity.Producto;
 import com.garepas.garepasapp.entity.Receta;
+import com.garepas.garepasapp.service.CostoService;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 
@@ -19,12 +20,7 @@ public record ProductoResponse(
 ) {
     public static ProductoResponse desde(Producto producto) {
         Receta receta = producto.getReceta();
-        BigDecimal costo = BigDecimal.ZERO;
-        if (receta != null && receta.getDetalles() != null) {
-            costo = receta.getDetalles().stream()
-                    .map(d -> d.getCantidad().multiply(d.getInsumo().getPrecioPorGramo()))
-                    .reduce(BigDecimal.ZERO, BigDecimal::add);
-        }
+        BigDecimal costo = CostoService.costoDeReceta(receta);
         BigDecimal precioVenta = producto.getPrecioVenta() != null ? producto.getPrecioVenta() : BigDecimal.ZERO;
         BigDecimal margen = precioVenta.subtract(costo);
         BigDecimal margenPct = precioVenta.compareTo(BigDecimal.ZERO) > 0

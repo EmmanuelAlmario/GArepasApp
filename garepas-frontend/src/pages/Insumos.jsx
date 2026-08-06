@@ -71,11 +71,16 @@ const factorUnidad = (unidad) => {
 
 export default function Insumos({ embedded = false }) {
   const [insumos, setInsumos] = useState([])
+  const [cargando, setCargando] = useState(true)
   const [modal, setModal] = useState(false)
   const [form, setForm] = useState(inicial)
   const [editando, setEditando] = useState(null)
 
-  const cargar = () => getInsumos().then((r) => setInsumos(r.data)).catch(console.error)
+  const cargar = () =>
+    getInsumos()
+      .then((r) => setInsumos(r.data))
+      .catch(console.error)
+      .finally(() => setCargando(false))
 
   useEffect(() => { cargar() }, [])
 
@@ -231,7 +236,7 @@ export default function Insumos({ embedded = false }) {
         </div>
       )}
 
-      <DataTable columns={columns} data={insumos} onEdit={handleEditar} onDelete={handleEliminar} />
+      <DataTable columns={columns} data={insumos} onEdit={handleEditar} onDelete={handleEliminar} loading={cargando} />
 
       {modal && (
         <Modal title={editando ? 'Editar insumo' : 'Agregar insumo'} onClose={() => setModal(false)}>

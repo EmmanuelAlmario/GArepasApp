@@ -7,6 +7,7 @@ import FormField from '../components/FormField'
 import { getRecetas, createReceta, updateReceta, deleteReceta } from '../api/recetas'
 import { getInsumos } from '../api/insumos'
 import { aUnidadBase, unidadBase, fmtCantidad, desdeBase } from '../utils/unidades'
+import toast from 'react-hot-toast'
 
 const UNIDADES = ['GRAMO', 'KILOGRAMO', 'MILILITRO', 'LITRO', 'UNIDAD', 'CUCHARADA', 'TAZA'].map((u) => ({
   value: u, label: u,
@@ -21,11 +22,16 @@ const fmt = (n) =>
 export default function Recetas({ embedded = false }) {
   const [recetas, setRecetas] = useState([])
   const [insumos, setInsumos] = useState([])
+  const [cargando, setCargando] = useState(true)
   const [modal, setModal] = useState(false)
   const [form, setForm] = useState(inicial)
   const [editando, setEditando] = useState(null)
 
-  const cargar = () => getRecetas().then((r) => setRecetas(r.data)).catch(console.error)
+  const cargar = () =>
+    getRecetas()
+      .then((r) => setRecetas(r.data))
+      .catch(console.error)
+      .finally(() => setCargando(false))
 
   useEffect(() => {
     cargar()
@@ -73,7 +79,7 @@ export default function Recetas({ embedded = false }) {
       setEditando(null)
       cargar()
     } catch (err) {
-      alert(err.response?.data?.mensaje ?? 'Error al guardar')
+      toast.error(err.response?.data?.mensaje ?? 'Error al guardar')
     }
   }
 
@@ -100,7 +106,7 @@ export default function Recetas({ embedded = false }) {
       await deleteReceta(id)
       cargar()
     } catch (err) {
-      alert(err.response?.data?.mensaje ?? 'Error al eliminar')
+      toast.error(err.response?.data?.mensaje ?? 'Error al eliminar')
     }
   }
 
@@ -140,7 +146,7 @@ export default function Recetas({ embedded = false }) {
         </div>
       )}
 
-      <DataTable columns={columns} data={recetas} onEdit={handleEditar} onDelete={handleEliminar} />
+      <DataTable columns={columns} data={recetas} onEdit={handleEditar} onDelete={handleEliminar} loading={cargando} />
 
       {modal && (
         <Modal title={editando ? 'Editar receta' : 'Agregar receta'} onClose={() => setModal(false)}>

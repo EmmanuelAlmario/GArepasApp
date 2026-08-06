@@ -49,18 +49,27 @@ const CustomDonaTooltip = ({ active, payload }) => {
 
 export default function Dashboard() {
   const [datos, setDatos] = useState({ insumos: [], productos: [], ventas: [], gastos: [] })
+  const [cargando, setCargando] = useState(true)
 
   useEffect(() => {
-    Promise.all([getInsumos(), getProductos(), getVentas(), getGastos()])
-      .then(([ins, prod, ven, gas]) => {
-        setDatos({
-          insumos: ins.data,
-          productos: prod.data,
-          ventas: ven.data,
-          gastos: gas.data,
-        })
-      })
-      .catch(console.error)
+    let activo = true
+    const cargarSeccion = async (key, fn) => {
+      try {
+        const r = await fn()
+        if (activo) setDatos((d) => ({ ...d, [key]: r.data }))
+      } catch (err) {
+        console.error(`Error cargando ${key}`, err)
+      }
+    }
+    Promise.allSettled([
+      cargarSeccion('insumos', getInsumos),
+      cargarSeccion('productos', getProductos),
+      cargarSeccion('ventas', getVentas),
+      cargarSeccion('gastos', getGastos),
+    ]).finally(() => {
+      if (activo) setCargando(false)
+    })
+    return () => { activo = false }
   }, [])
 
   const totalVentas = datos.ventas.reduce((acc, v) => acc + Number(v.total), 0)
@@ -76,18 +85,14 @@ export default function Dashboard() {
   const porMes = () => {
     const mapa = {}
 
-    datos.ventas.forEach((v) => {
-      const fecha = new Date(v.fecha)
+    ;[...datos.ventas, ...datos.gastos].forEach((item) => {
+      const esVenta = item.total !== undefined
+      const fecha = new Date(item.fecha)
+      if (Number.isNaN(fecha.getTime())) return
       const clave = `${fecha.getFullYear()}-${fecha.getMonth()}`
       if (!mapa[clave]) mapa[clave] = { mes: `${MESES[fecha.getMonth()]} ${fecha.getFullYear()}`, ingresos: 0, gastos: 0, año: fecha.getFullYear(), m: fecha.getMonth() }
-      mapa[clave].ingresos += Number(v.total)
-    })
-
-    datos.gastos.forEach((g) => {
-      const fecha = new Date(g.fecha)
-      const clave = `${fecha.getFullYear()}-${fecha.getMonth()}`
-      if (!mapa[clave]) mapa[clave] = { mes: `${MESES[fecha.getMonth()]} ${fecha.getFullYear()}`, ingresos: 0, gastos: 0, año: fecha.getFullYear(), m: fecha.getMonth() }
-      mapa[clave].gastos += Number(g.monto)
+      if (esVenta) mapa[clave].ingresos += Number(item.total)
+      else mapa[clave].gastos += Number(item.monto)
     })
 
     return Object.values(mapa)
@@ -106,6 +111,10 @@ export default function Dashboard() {
   return (
     <div>
       <PageHeader title="Dashboard" />
+
+      {cargando && (
+        <p className="mb-4 text-sm text-gray-400">Cargando datos…</p>
+      )}
 
       {/* Métricas */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">

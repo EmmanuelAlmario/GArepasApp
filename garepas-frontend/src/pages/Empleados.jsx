@@ -14,6 +14,7 @@ import {
   registrarPago,
   getHistorial,
 } from '../api/empleados'
+import toast from 'react-hot-toast'
 
 const inicialForm = { nombre: '', precioDia: '', activo: true }
 
@@ -54,7 +55,7 @@ export default function Empleados({ embedded = false }) {
       setEditando(null)
       cargar()
     } catch (err) {
-      alert(err.response?.data?.mensaje ?? 'Error al guardar')
+      toast.error(err.response?.data?.mensaje ?? 'Error al guardar')
     }
   }
 
@@ -69,7 +70,7 @@ export default function Empleados({ embedded = false }) {
       await agregarDias(emp.id, 1)
       cargar()
     } catch (err) {
-      alert(err.response?.data?.mensaje ?? 'Error')
+      toast.error(err.response?.data?.mensaje ?? 'Error')
     }
   }
 
@@ -78,7 +79,7 @@ export default function Empleados({ embedded = false }) {
       await quitarDias(emp.id, 1)
       cargar()
     } catch (err) {
-      alert(err.response?.data?.mensaje ?? 'Error')
+      toast.error(err.response?.data?.mensaje ?? 'Error')
     }
   }
 
@@ -94,16 +95,21 @@ export default function Empleados({ embedded = false }) {
       await registrarPago({ empleadoId: seleccionado.id, diasPagados: Number(diasPago) })
       setModalPago(false)
       cargar()
+      toast.success('Pago registrado.')
     } catch (err) {
-      alert(err.response?.data?.mensaje ?? 'Error al registrar pago')
+      toast.error(err.response?.data?.mensaje ?? 'Error al registrar pago')
     }
   }
 
   const abrirHistorial = async (emp) => {
     setSeleccionado(emp)
-    const r = await getHistorial(emp.id)
-    setHistorial(r.data)
-    setModalHistorial(true)
+    try {
+      const r = await getHistorial(emp.id)
+      setHistorial(r.data)
+      setModalHistorial(true)
+    } catch (err) {
+      toast.error(err.response?.data?.mensaje ?? 'No se pudo cargar el historial')
+    }
   }
 
   const columnsHistorial = [

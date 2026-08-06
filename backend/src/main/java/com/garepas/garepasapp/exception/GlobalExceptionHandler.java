@@ -6,6 +6,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import java.time.LocalDateTime;
@@ -35,6 +36,11 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(OperacionInvalidaException.class)
     public ResponseEntity<Map<String, Object>> handleOperacionInvalida(OperacionInvalidaException ex) {
         return buildResponse(HttpStatus.BAD_REQUEST, ex.getMessage());
+    }
+
+    @ExceptionHandler(AuthenticationException.class)
+    public ResponseEntity<Map<String, Object>> handleAuthentication(AuthenticationException ex) {
+        return buildResponse(HttpStatus.UNAUTHORIZED, "Usuario o contraseña incorrectos.");
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)

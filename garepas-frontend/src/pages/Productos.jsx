@@ -8,6 +8,7 @@ import StatusBadge from '../components/StatusBadge'
 import { getProductos, createProducto, updateProducto, deleteProducto } from '../api/productos'
 import { getRecetas } from '../api/recetas'
 import { getCostoReceta, getSugerenciaPrecio } from '../api/costos'
+import toast from 'react-hot-toast'
 
 const inicial = { nombre: '', stockActual: '', precioVenta: '', recetaId: '', activo: true }
 const fmt = (n) =>
@@ -16,11 +17,16 @@ const fmt = (n) =>
 export default function Productos({ embedded = false }) {
   const [productos, setProductos] = useState([])
   const [recetas, setRecetas] = useState([])
+  const [cargando, setCargando] = useState(true)
   const [modal, setModal] = useState(false)
   const [form, setForm] = useState(inicial)
   const [editando, setEditando] = useState(null)
 
-  const cargar = () => getProductos().then((r) => setProductos(r.data)).catch(console.error)
+  const cargar = () =>
+    getProductos()
+      .then((r) => setProductos(r.data))
+      .catch(console.error)
+      .finally(() => setCargando(false))
 
   useEffect(() => {
     cargar()
@@ -51,7 +57,7 @@ export default function Productos({ embedded = false }) {
       setEditando(null)
       cargar()
     } catch (err) {
-      alert(err.response?.data?.mensaje ?? 'Error al guardar')
+      toast.error(err.response?.data?.mensaje ?? 'Error al guardar')
     }
   }
 
@@ -66,8 +72,8 @@ export default function Productos({ embedded = false }) {
         const sugerido = Number(costo.data.costoTotal) * (1 + margen)
         setForm((f) => ({ ...f, precioVenta: sugerido.toFixed(2) }))
       }
-    } catch {
-      // no-op
+    } catch (err) {
+      toast.error(err.response?.data?.mensaje ?? 'No se pudo sugerir el precio')
     }
   }
 
@@ -83,7 +89,7 @@ export default function Productos({ embedded = false }) {
       await deleteProducto(id)
       cargar()
     } catch (err) {
-      alert(err.response?.data?.mensaje ?? 'Error al eliminar')
+      toast.error(err.response?.data?.mensaje ?? 'Error al eliminar')
     }
   }
 
@@ -116,7 +122,7 @@ export default function Productos({ embedded = false }) {
         </div>
       )}
 
-      <DataTable columns={columns} data={productos} onEdit={handleEditar} onDelete={handleEliminar} />
+      <DataTable columns={columns} data={productos} onEdit={handleEditar} onDelete={handleEliminar} loading={cargando} />
 
       {modal && (
         <Modal title={editando ? 'Editar producto' : 'Agregar producto'} onClose={() => setModal(false)}>

@@ -7,6 +7,8 @@ import java.math.BigDecimal;
 @Entity
 @Table(name = "productos", uniqueConstraints = {
         @UniqueConstraint(name = "uk_productos_nombre", columnNames = "nombre")
+}, indexes = {
+        @Index(name = "idx_productos_receta_id", columnList = "receta_id")
 })
 @Getter
 @Setter

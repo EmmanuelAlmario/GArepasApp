@@ -1,4 +1,11 @@
-export default function DataTable({ columns, data, onEdit, onDelete }) {
+export default function DataTable({ columns, data, onEdit, onDelete, loading = false }) {
+  if (loading) {
+    return (
+      <div className="bg-[var(--brand-surface)] rounded-xl border border-[#f5e2af] shadow-sm p-12 text-center">
+        <p className="text-[var(--brand-ink)]/40 text-sm">Cargando…</p>
+      </div>
+    )
+  }
   if (!data || data.length === 0) {
     return (
       <div className="bg-[var(--brand-surface)] rounded-xl border border-[#f5e2af] shadow-sm p-12 text-center">

@@ -115,12 +115,17 @@ public class InsumoService {
         }
 
         List<String> errores = new ArrayList<>();
+        Map<Long, BigDecimal> totales = new HashMap<>();
         for (DetalleAjusteStockRequest d : request.detalles()) {
             Insumo insumo = insumosMap.get(d.insumoId());
-            BigDecimal nuevoStock = insumo.getStockActual().subtract(d.cantidad());
+            totales.merge(d.insumoId(), d.cantidad(), BigDecimal::add);
+        }
+        for (Map.Entry<Long, BigDecimal> e : totales.entrySet()) {
+            Insumo insumo = insumosMap.get(e.getKey());
+            BigDecimal nuevoStock = insumo.getStockActual().subtract(e.getValue());
             if (nuevoStock.compareTo(BigDecimal.ZERO) < 0) {
                 errores.add("Insumo '" + insumo.getNombre() + "': stock actual "
-                        + insumo.getStockActual() + ", intentas descontar " + d.cantidad());
+                        + insumo.getStockActual() + ", intentas descontar " + e.getValue());
             }
         }
         if (!errores.isEmpty()) {
@@ -130,11 +135,11 @@ public class InsumoService {
 
         BigDecimal valorTotal = BigDecimal.ZERO;
         List<InsumoResponse> actualizados = new ArrayList<>();
-        for (DetalleAjusteStockRequest d : request.detalles()) {
-            Insumo insumo = insumosMap.get(d.insumoId());
-            insumo.setStockActual(insumo.getStockActual().subtract(d.cantidad()));
+        for (Map.Entry<Long, BigDecimal> e : totales.entrySet()) {
+            Insumo insumo = insumosMap.get(e.getKey());
+            insumo.setStockActual(insumo.getStockActual().subtract(e.getValue()));
             insumoRepository.save(insumo);
-            valorTotal = valorTotal.add(d.cantidad().multiply(insumo.getPrecioPorGramo()));
+            valorTotal = valorTotal.add(e.getValue().multiply(insumo.getPrecioPorGramo()));
             actualizados.add(InsumoResponse.desde(insumo));
         }
 

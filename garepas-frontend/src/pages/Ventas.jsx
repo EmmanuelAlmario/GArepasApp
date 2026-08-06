@@ -6,16 +6,26 @@ import Button from '../components/Button'
 import FormField from '../components/FormField'
 import { getVentas, createVenta, deleteVenta } from '../api/ventas'
 import { getProductos } from '../api/productos'
+import { leerSesion } from '../api/auth'
+import toast from 'react-hot-toast'
 
 const detalleInicial = { productoId: '', cantidad: '', precioUnitario: '' }
 
 export default function Ventas() {
   const [ventas, setVentas] = useState([])
   const [productos, setProductos] = useState([])
+  const [cargando, setCargando] = useState(true)
   const [modal, setModal] = useState(false)
   const [detalles, setDetalles] = useState([{ ...detalleInicial }])
 
-  const cargar = () => getVentas().then((r) => setVentas(r.data)).catch(console.error)
+  const sesion = leerSesion()
+  const puedeEliminar = sesion?.rol === 'ADMIN'
+
+  const cargar = () =>
+    getVentas()
+      .then((r) => setVentas(r.data))
+      .catch(console.error)
+      .finally(() => setCargando(false))
 
   useEffect(() => {
     cargar()
@@ -55,8 +65,9 @@ export default function Ventas() {
       setModal(false)
       setDetalles([{ ...detalleInicial }])
       cargar()
+      toast.success('Venta registrada.')
     } catch (err) {
-      alert(err.response?.data?.mensaje ?? 'Error al registrar venta')
+      toast.error(err.response?.data?.mensaje ?? 'Error al registrar venta')
     }
   }
 
@@ -66,7 +77,7 @@ export default function Ventas() {
       await deleteVenta(id)
       cargar()
     } catch (err) {
-      alert(err.response?.data?.mensaje ?? 'Error al eliminar')
+      toast.error(err.response?.data?.mensaje ?? 'Error al eliminar')
     }
   }
 
@@ -93,7 +104,7 @@ export default function Ventas() {
         </Button>
       </PageHeader>
 
-      <DataTable columns={columns} data={ventas} onDelete={handleEliminar} />
+      <DataTable columns={columns} data={ventas} onDelete={puedeEliminar ? handleEliminar : undefined} loading={cargando} />
 
       {modal && (
         <Modal title="Registrar venta" onClose={() => setModal(false)}>

@@ -3,6 +3,7 @@ package com.garepas.garepasapp.service;
 import com.garepas.garepasapp.dto.request.GastoRequest;
 import com.garepas.garepasapp.dto.response.GastoResponse;
 import com.garepas.garepasapp.entity.Gasto;
+import com.garepas.garepasapp.exception.OperacionInvalidaException;
 import com.garepas.garepasapp.exception.RecursoNoEncontradoException;
 import com.garepas.garepasapp.repository.GastoRepository;
 import lombok.RequiredArgsConstructor;
@@ -55,6 +56,10 @@ public class GastoService {
     public GastoResponse actualizar(Long id, GastoRequest request) {
         Gasto gasto = gastoRepository.findById(id)
                 .orElseThrow(() -> new RecursoNoEncontradoException("Gasto", id));
+        if (gasto.getProduccionId() != null) {
+            throw new OperacionInvalidaException(
+                    "Este gasto fue generado automáticamente por una producción y no se puede editar.");
+        }
         gasto.setDescripcion(request.descripcion());
         gasto.setMonto(request.monto());
         gasto.setCategoria(request.categoria());
