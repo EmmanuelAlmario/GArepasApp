@@ -7,8 +7,10 @@ import com.garepas.garepasapp.entity.DetalleReceta;
 import com.garepas.garepasapp.entity.Insumo;
 import com.garepas.garepasapp.entity.Receta;
 import com.garepas.garepasapp.exception.RecursoDuplicadoException;
+import com.garepas.garepasapp.exception.OperacionInvalidaException;
 import com.garepas.garepasapp.exception.RecursoNoEncontradoException;
 import com.garepas.garepasapp.repository.InsumoRepository;
+import com.garepas.garepasapp.repository.ProductoRepository;
 import com.garepas.garepasapp.repository.RecetaRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -24,6 +26,7 @@ public class RecetaService {
 
     private final RecetaRepository recetaRepository;
     private final InsumoRepository insumoRepository;
+    private final ProductoRepository productoRepository;
 
     @Transactional(readOnly = true)
     public List<RecetaResponse> listarTodas() {
@@ -97,6 +100,10 @@ public class RecetaService {
     public void eliminar(Long id) {
         if (!recetaRepository.existsById(id)) {
             throw new RecursoNoEncontradoException("Receta", id);
+        }
+        if (!productoRepository.findByRecetaId(id).isEmpty()) {
+            throw new OperacionInvalidaException(
+                    "No se puede eliminar la receta porque está asociada a uno o más productos.");
         }
         recetaRepository.deleteById(id);
     }
