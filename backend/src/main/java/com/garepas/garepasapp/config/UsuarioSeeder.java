@@ -21,25 +21,30 @@ public class UsuarioSeeder implements CommandLineRunner {
     @Value("${app.seed.admin-password:admin123}")
     private String adminPassword;
 
-    @Value("${app.seed.ventas-password:ventas123}")
-    private String ventasPassword;
-
     @Override
     public void run(String... args) {
-        crearSiNoExiste("admin", adminPassword, Rol.ADMIN);
-        crearSiNoExiste("ventas", ventasPassword, Rol.VENTAS);
+        upsert("admin", adminPassword, Rol.ADMIN);
     }
 
-    private void crearSiNoExiste(String username, String password, Rol rol) {
-        if (usuarioRepository.existsByUsernameIgnoreCase(username)) {
-            return;
+    /**
+     * Crea el usuario si no existe, o actualiza su contraseña/rol si sí existe.
+     * Así, cambiar ADMIN_PASSWORD / VENTAS_PASSWORD en el entorno basta para
+     * actualizar la contraseña en un redeploy (no solo al primer arranque).
+     */
+    private void upsert(String username, String password, Rol rol) {
+        var usuario = usuarioRepository.findByUsernameIgnoreCase(username)
+                .orElseGet(() -> Usuario.builder().username(username).build());
+        boolean nuevo = usuario.getId() == null;
+        if (nuevo) {
+            usuario.setActivo(true);
         }
-        usuarioRepository.save(Usuario.builder()
-                .username(username)
-                .password(passwordEncoder.encode(password))
-                .rol(rol)
-                .activo(true)
-                .build());
-        log.info("Usuario por defecto creado: '{}' con rol {}", username, rol);
+        usuario.setPassword(passwordEncoder.encode(password));
+        usuario.setRol(rol);
+        usuarioRepository.save(usuario);
+        if (nuevo) {
+            log.info("Usuario por defecto creado: '{}' con rol {}", username, rol);
+        } else {
+            log.info("Contraseña de '{}' actualizada desde el entorno.", username);
+        }
     }
 }

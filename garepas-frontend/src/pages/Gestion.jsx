@@ -6,6 +6,7 @@ import Productos from './Productos'
 import Recetas from './Recetas'
 import Gastos from './Gastos'
 import Empleados from './Empleados'
+import Usuarios from './Usuarios'
 
 const TABS = [
   { value: 'insumos', label: 'Insumos' },
@@ -13,6 +14,7 @@ const TABS = [
   { value: 'recetas', label: 'Recetas' },
   { value: 'gastos', label: 'Gastos' },
   { value: 'empleados', label: 'Empleados' },
+  { value: 'usuarios', label: 'Usuarios' },
 ]
 
 export default function Gestion() {
@@ -31,6 +33,7 @@ export default function Gestion() {
       {tab === 'recetas' && <Recetas embedded />}
       {tab === 'gastos' && <Gastos embedded />}
       {tab === 'empleados' && <Empleados embedded />}
+      {tab === 'usuarios' && <Usuarios embedded />}
     </div>
   )
 }
