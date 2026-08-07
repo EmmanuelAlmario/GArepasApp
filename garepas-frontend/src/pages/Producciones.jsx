@@ -4,6 +4,7 @@ import DataTable from '../components/DataTable'
 import Modal from '../components/Modal'
 import Button from '../components/Button'
 import FormField from '../components/FormField'
+import ConfirmDialog from '../components/ConfirmDialog'
 import { getProducciones, createProduccion, verificarProduccion, deleteProduccion } from '../api/producciones'
 import { getProductos } from '../api/productos'
 import { downloadCSV, fechaCSV } from '../utils/export'
@@ -22,6 +23,7 @@ export default function Producciones() {
   const [verificandoId, setVerificandoId] = useState(null)
   const [faltantes, setFaltantes] = useState(null)
   const [cargando, setCargando] = useState(true)
+  const [confirmId, setConfirmId] = useState(null)
 
   const cargar = () => getProducciones().then((r) => setProducciones(r.data)).catch(console.error)
 
@@ -79,13 +81,14 @@ export default function Producciones() {
   }
 
   const handleEliminar = async (id) => {
-    if (!confirm('¿Eliminar esta producción? Se revertirá el stock de insumos y producto si estaba completada.')) return
     try {
       await deleteProduccion(id)
       toast.success('Producción eliminada.')
       cargar()
     } catch (err) {
       toast.error(err.response?.data?.mensaje ?? 'Error al eliminar')
+    } finally {
+      setConfirmId(null)
     }
   }
 
@@ -102,8 +105,8 @@ export default function Producciones() {
           onClick={() => v === 'PENDIENTE' && setFaltantes(row)}
           className={`inline-flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-full transition-colors ${
             v === 'COMPLETADA'
-              ? 'bg-green-100 text-green-700'
-              : 'bg-red-100 text-red-700 hover:bg-red-200 cursor-pointer underline decoration-dotted underline-offset-2'
+              ? 'bg-[#e7f3db] text-[var(--brand-success)]'
+              : 'bg-[#fde7e4] text-[var(--brand-danger)] hover:bg-[#fbd4ce] cursor-pointer underline decoration-dotted underline-offset-2'
           }`}
           title={v === 'PENDIENTE' ? 'Ver insumos faltantes' : ''}
         >
@@ -117,7 +120,7 @@ export default function Producciones() {
         const total = v?.length ?? 0
         const ok = v?.filter((d) => d.suficiente).length ?? 0
         return (
-          <span className={`text-xs font-medium ${ok === total ? 'text-green-600' : 'text-red-600'}`}>
+          <span className={`text-xs font-medium ${ok === total ? 'text-[var(--brand-success)]' : 'text-[var(--brand-danger)]'}`}>
             {ok}/{total}
           </span>
         )
@@ -141,7 +144,7 @@ export default function Producciones() {
             </button>
           )}
           <button
-            onClick={() => handleEliminar(row.id)}
+            onClick={() => setConfirmId(row.id)}
             className="text-xs px-3 py-1.5 rounded-lg bg-[#fde7e4] text-[var(--brand-danger)] hover:bg-[#fbd4ce] font-bold transition-colors"
           >
             Eliminar
@@ -278,6 +281,14 @@ export default function Producciones() {
           </div>
         </Modal>
       )}
+
+      <ConfirmDialog
+        open={!!confirmId}
+        title="Eliminar producción"
+        message="¿Eliminar esta producción? Se revertirá el stock de insumos y producto si estaba completada."
+        onConfirm={() => handleEliminar(confirmId)}
+        onCancel={() => setConfirmId(null)}
+      />
     </div>
   )
 }

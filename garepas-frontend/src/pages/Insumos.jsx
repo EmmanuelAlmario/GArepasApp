@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react'
+import { Search } from 'lucide-react'
 import PageHeader from '../components/PageHeader'
 import DataTable from '../components/DataTable'
+import ConfirmDialog from '../components/ConfirmDialog'
 import Modal from '../components/Modal'
 import Button from '../components/Button'
 import FormField from '../components/FormField'
@@ -76,6 +78,8 @@ export default function Insumos({ embedded = false }) {
   const [modal, setModal] = useState(false)
   const [form, setForm] = useState(inicial)
   const [editando, setEditando] = useState(null)
+  const [confirmId, setConfirmId] = useState(null)
+  const [busqueda, setBusqueda] = useState('')
 
   const cargar = () =>
     getInsumos()
@@ -132,17 +136,17 @@ export default function Insumos({ embedded = false }) {
     setModal(true)
   }
 
-  const handleEliminar = async (id) => {
-    if (!confirm('¿Eliminar este insumo?')) return
+const handleEliminar = async (id) => {
     try {
       await deleteInsumo(id)
       cargar()
     } catch (err) {
       toast.error(err.response?.data?.mensaje ?? 'Error al eliminar')
+} finally {
+      setConfirmId(null)
     }
   }
 
-  // --- Ajuste múltiple de stock (reducción) ---
   const [modalAjuste, setModalAjuste] = useState(false)
   const [filasAjuste, setFilasAjuste] = useState([{ insumoId: '', cantidad: '' }])
   const [enviandoAjuste, setEnviandoAjuste] = useState(false)
@@ -222,6 +226,10 @@ export default function Insumos({ embedded = false }) {
     { key: 'activo', label: 'Estado', render: (v) => <StatusBadge activo={v} /> },
   ]
 
+  const insumosFiltrados = busqueda.trim()
+    ? insumos.filter((i) => i.nombre.toLowerCase().includes(busqueda.trim().toLowerCase()))
+    : insumos
+
   return (
     <div>
       {!embedded && (
@@ -247,7 +255,19 @@ export default function Insumos({ embedded = false }) {
         </div>
       )}
 
-      <DataTable columns={columns} data={insumos} onEdit={handleEditar} onDelete={handleEliminar} loading={cargando} />
+      <div className="relative mb-4">
+        <Search size={17} className="absolute top-1/2 -translate-y-1/2 left-3 text-[var(--muted)]" />
+        <input
+          value={busqueda}
+          onChange={(e) => setBusqueda(e.target.value)}
+          placeholder="Buscar insumo por nombre…"
+          aria-label="Buscar insumo"
+          className="w-full pl-9 pr-4 py-2.5 rounded-xl border border-[var(--border)] text-sm outline-none focus:ring-2 focus:ring-[var(--brand-orange)]/30"
+          style={{ background: 'var(--panel-2)', color: 'var(--ink)' }}
+        />
+      </div>
+
+      <DataTable columns={columns} data={insumosFiltrados} onEdit={handleEditar} onDelete={setConfirmId} loading={cargando} />
 
       {modal && (
         <Modal title={editando ? 'Editar insumo' : 'Agregar insumo'} onClose={() => setModal(false)}>
@@ -345,7 +365,7 @@ export default function Insumos({ embedded = false }) {
                 const stockBase = ins ? Number(ins.stockActual) : 0
                 const quedaría = ins ? stockBase - cantidadBase : null
                 const excede = quedaría !== null && quedaría < 0
-                return (
+  return (
                   <div key={idx} className="rounded-lg border border-[#f2e0b2] p-3 bg-[#fffbe9]">
                     <div className="grid grid-cols-2 sm:grid-cols-12 gap-2 items-end">
                       <div className="col-span-2 sm:col-span-8">
@@ -409,6 +429,14 @@ export default function Insumos({ embedded = false }) {
           </form>
         </Modal>
       )}
+
+      <ConfirmDialog
+        open={!!confirmId}
+        title="Eliminar insumo"
+        message="¿Eliminar este insumo? Esta acción no se puede deshacer."
+        onConfirm={() => handleEliminar(confirmId)}
+        onCancel={() => setConfirmId(null)}
+      />
     </div>
   )
 }

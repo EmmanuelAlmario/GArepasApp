@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react'
+import { Search } from 'lucide-react'
 import PageHeader from '../components/PageHeader'
 import DataTable from '../components/DataTable'
 import Modal from '../components/Modal'
 import Button from '../components/Button'
 import FormField from '../components/FormField'
+import ConfirmDialog from '../components/ConfirmDialog'
 import { getGastos, createGasto, updateGasto, deleteGasto } from '../api/gastos'
 import { CATEGORIAS_GASTO } from '../constants/categoriasGasto'
 import { downloadCSV, fechaCSV } from '../utils/export'
@@ -17,6 +19,8 @@ export default function Gastos({ embedded = false }) {
   const [modal, setModal] = useState(false)
   const [form, setForm] = useState(inicial)
   const [editando, setEditando] = useState(null)
+  const [confirmId, setConfirmId] = useState(null)
+  const [busqueda, setBusqueda] = useState('')
 
   const cargar = () =>
     getGastos()
@@ -56,13 +60,14 @@ export default function Gastos({ embedded = false }) {
   }
 
   const handleEliminar = async (id) => {
-    if (!confirm('¿Eliminar este gasto?')) return
     try {
       await deleteGasto(id)
       cargar()
       toast.success('Gasto eliminado.')
     } catch (err) {
       toast.error(err.response?.data?.mensaje ?? 'Error al eliminar')
+    } finally {
+      setConfirmId(null)
     }
   }
 
@@ -89,6 +94,12 @@ export default function Gastos({ embedded = false }) {
     { key: 'monto', label: 'Monto', render: (v) => fmt(v) },
   ]
 
+  const gastosFiltrados = busqueda.trim()
+    ? gastos.filter((g) =>
+        g.descripcion.toLowerCase().includes(busqueda.trim().toLowerCase()) ||
+        (g.categoria || '').toLowerCase().includes(busqueda.trim().toLowerCase()))
+    : gastos
+
   return (
     <div>
       {!embedded && (
@@ -109,7 +120,19 @@ export default function Gastos({ embedded = false }) {
         </div>
       )}
 
-      <DataTable columns={columns} data={gastos} onEdit={handleEditar} onDelete={handleEliminar} loading={cargando} />
+      <div className="relative mb-4">
+        <Search size={17} className="absolute top-1/2 -translate-y-1/2 left-3 text-[var(--muted)]" />
+        <input
+          value={busqueda}
+          onChange={(e) => setBusqueda(e.target.value)}
+          placeholder="Buscar gasto por descripción o categoría…"
+          aria-label="Buscar gasto"
+          className="w-full pl-9 pr-4 py-2.5 rounded-xl border border-[var(--border)] text-sm outline-none focus:ring-2 focus:ring-[var(--brand-orange)]/30"
+          style={{ background: 'var(--panel-2)', color: 'var(--ink)' }}
+        />
+      </div>
+
+      <DataTable columns={columns} data={gastosFiltrados} onEdit={handleEditar} onDelete={setConfirmId} loading={cargando} />
 
       {modal && (
         <Modal title={editando ? 'Editar gasto' : 'Registrar gasto'} onClose={() => setModal(false)}>
@@ -126,6 +149,14 @@ export default function Gastos({ embedded = false }) {
           </form>
         </Modal>
       )}
+
+      <ConfirmDialog
+        open={!!confirmId}
+        title="Eliminar gasto"
+        message="¿Eliminar este gasto? Esta acción no se puede deshacer."
+        onConfirm={() => handleEliminar(confirmId)}
+        onCancel={() => setConfirmId(null)}
+      />
     </div>
   )
 }

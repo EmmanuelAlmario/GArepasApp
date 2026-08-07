@@ -4,6 +4,7 @@ import Modal from '../components/Modal'
 import Button from '../components/Button'
 import FormField from '../components/FormField'
 import StatusBadge from '../components/StatusBadge'
+import ConfirmDialog from '../components/ConfirmDialog'
 import {
   getUsuarios,
   createUsuario,
@@ -22,6 +23,7 @@ export default function Usuarios({ embedded = false }) {
   const [form, setForm] = useState(inicialForm)
   const [editando, setEditando] = useState(null)
   const [cargando, setCargando] = useState(true)
+  const [confirmar, setConfirmar] = useState(null)
 
   const cargar = () => getUsuarios().then((r) => setUsuarios(r.data)).catch(console.error)
 
@@ -75,14 +77,15 @@ export default function Usuarios({ embedded = false }) {
     setModal(true)
   }
 
-  const handleEliminar = async (u) => {
-    if (!window.confirm(`¿Eliminar el usuario "${u.username}"?`)) return
+  const handleEliminar = async (id) => {
     try {
-      await deleteUsuario(u.id)
+      await deleteUsuario(id)
       cargar()
       toast.success('Usuario eliminado.')
     } catch (err) {
       toast.error(err.response?.data?.mensaje ?? 'No se pudo eliminar')
+    } finally {
+      setConfirmar(null)
     }
   }
 
@@ -103,7 +106,7 @@ export default function Usuarios({ embedded = false }) {
         </div>
       )}
 
-      <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
+      <div className="rounded-xl border border-[var(--border)] shadow-sm overflow-hidden" style={{ background: 'var(--panel)' }}>
         {cargando ? (
           <div className="p-8 space-y-3">
             {[0, 1, 2].map((i) => <div key={i} className="skeleton h-6 w-full" />)}
@@ -112,41 +115,41 @@ export default function Usuarios({ embedded = false }) {
         <div className="overflow-x-auto">
           <table className="w-full text-sm min-w-[600px]">
             <thead>
-              <tr className="border-b border-gray-100">
-                <th className="text-left px-5 py-3.5 text-xs font-semibold text-gray-400 uppercase">Usuario</th>
-                <th className="text-left px-5 py-3.5 text-xs font-semibold text-gray-400 uppercase">Rol</th>
-                <th className="text-left px-5 py-3.5 text-xs font-semibold text-gray-400 uppercase">Estado</th>
-                <th className="text-right px-5 py-3.5 text-xs font-semibold text-gray-400 uppercase">Acciones</th>
+              <tr className="border-b border-[var(--border)]">
+                <th className="text-left px-5 py-3.5 text-xs font-semibold text-[var(--muted)] uppercase">Usuario</th>
+                <th className="text-left px-5 py-3.5 text-xs font-semibold text-[var(--muted)] uppercase">Rol</th>
+                <th className="text-left px-5 py-3.5 text-xs font-semibold text-[var(--muted)] uppercase">Estado</th>
+                <th className="text-right px-5 py-3.5 text-xs font-semibold text-[var(--muted)] uppercase">Acciones</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-50">
+            <tbody className="divide-y divide-[var(--border)]">
               {usuarios.length === 0 ? (
                 <tr>
-                  <td colSpan={4} className="text-center py-12 text-gray-400 text-sm">
+                  <td colSpan={4} className="text-center py-12 text-[var(--muted)] text-sm">
                     No hay usuarios registrados
                   </td>
                 </tr>
               ) : (
                 usuarios.map((u) => (
-                  <tr key={u.id} className="hover:bg-gray-50/60 transition-colors">
-                    <td className="px-5 py-3.5 font-medium text-gray-800">{u.username}</td>
-                    <td className="px-5 py-3.5 text-gray-700">{ROL_LABEL[u.rol] ?? u.rol}</td>
+                  <tr key={u.id} className="hover:bg-[var(--panel-2)] transition-colors">
+                    <td className="px-5 py-3.5 font-medium text-[var(--ink)]">{u.username}</td>
+                    <td className="px-5 py-3.5 text-[var(--ink-soft)]">{ROL_LABEL[u.rol] ?? u.rol}</td>
                     <td className="px-5 py-3.5"><StatusBadge activo={u.activo} /></td>
                     <td className="px-5 py-3.5 text-right">
                       <div className="flex items-center justify-end gap-2">
                         <button
                           onClick={() => handleEditar(u)}
-                          className="text-xs px-3 py-1.5 rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-100 font-medium transition-colors"
+                          className="text-xs px-3 py-1.5 rounded-lg bg-[#ffeec2] text-[var(--brand-ink)] hover:bg-[#ffe5a6] font-medium transition-colors"
                         >
                           Editar
                         </button>
                         <button
-                          onClick={() => handleEliminar(u)}
+                          onClick={() => setConfirmar(u)}
                           disabled={u.username === 'admin'}
                           className={`text-xs px-3 py-1.5 rounded-lg font-medium transition-colors ${
                             u.username === 'admin'
-                              ? 'bg-gray-50 text-gray-300 cursor-not-allowed'
-                              : 'bg-red-50 text-red-600 hover:bg-red-100'
+                              ? 'bg-[var(--panel-2)] text-[var(--muted)] cursor-not-allowed'
+                              : 'bg-[#fde7e4] text-[var(--brand-danger)] hover:bg-[#fbd4ce]'
                           }`}
                         >
                           Eliminar
@@ -177,18 +180,19 @@ export default function Usuarios({ embedded = false }) {
               autoComplete="new-password"
             />
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Rol</label>
+              <label className="block text-sm font-medium text-[var(--ink)] mb-1">Rol</label>
               <select
                 name="rol"
                 value={form.rol}
                 onChange={handleChange}
-                className="w-full rounded-lg border border-gray-200 px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500"
+                className="w-full rounded-lg border border-[var(--border)] px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--brand-orange)]/30"
+                style={{ background: 'var(--panel-2)', color: 'var(--ink)' }}
               >
                 <option value="VENTAS">Registrador de ventas</option>
                 <option value="ADMIN">Administrador</option>
               </select>
             </div>
-            <label className="flex items-center gap-2 text-sm text-gray-600 cursor-pointer">
+            <label className="flex items-center gap-2 text-sm text-[var(--ink-soft)] cursor-pointer">
               <input type="checkbox" name="activo" checked={form.activo} onChange={handleChange} className="rounded" />
               Activo
             </label>
@@ -199,6 +203,14 @@ export default function Usuarios({ embedded = false }) {
           </form>
         </Modal>
       )}
+
+      <ConfirmDialog
+        open={!!confirmar}
+        title="Eliminar usuario"
+        message={`¿Eliminar el usuario "${confirmar?.username}"? Esta acción no se puede deshacer.`}
+        onConfirm={() => handleEliminar(confirmar.id)}
+        onCancel={() => setConfirmar(null)}
+      />
     </div>
   )
 }

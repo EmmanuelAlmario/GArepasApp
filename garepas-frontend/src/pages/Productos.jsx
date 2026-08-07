@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import PageHeader from '../components/PageHeader'
 import DataTable from '../components/DataTable'
+import ConfirmDialog from '../components/ConfirmDialog'
 import Modal from '../components/Modal'
 import Button from '../components/Button'
 import FormField from '../components/FormField'
@@ -21,6 +22,7 @@ export default function Productos({ embedded = false }) {
   const [modal, setModal] = useState(false)
   const [form, setForm] = useState(inicial)
   const [editando, setEditando] = useState(null)
+  const [confirmId, setConfirmId] = useState(null)
 
   const cargar = () =>
     getProductos()
@@ -85,12 +87,13 @@ export default function Productos({ embedded = false }) {
   }
 
   const handleEliminar = async (id) => {
-    if (!confirm('¿Eliminar este producto?')) return
     try {
       await deleteProducto(id)
       cargar()
     } catch (err) {
       toast.error(err.response?.data?.mensaje ?? 'Error al eliminar')
+    } finally {
+      setConfirmId(null)
     }
   }
 
@@ -131,7 +134,7 @@ export default function Productos({ embedded = false }) {
         </div>
       )}
 
-      <DataTable columns={columns} data={productos} onEdit={handleEditar} onDelete={handleEliminar} loading={cargando} />
+      <DataTable columns={columns} data={productos} onEdit={handleEditar} onDelete={setConfirmId} loading={cargando} />
 
       {modal && (
         <Modal title={editando ? 'Editar producto' : 'Agregar producto'} onClose={() => setModal(false)}>
@@ -167,6 +170,14 @@ export default function Productos({ embedded = false }) {
           </form>
         </Modal>
       )}
+
+      <ConfirmDialog
+        open={!!confirmId}
+        title="Eliminar producto"
+        message="¿Eliminar este producto? Esta acción no se puede deshacer."
+        onConfirm={() => handleEliminar(confirmId)}
+        onCancel={() => setConfirmId(null)}
+      />
     </div>
   )
 }

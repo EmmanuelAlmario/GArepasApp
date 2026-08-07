@@ -1,13 +1,15 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { motion } from 'framer-motion'
 import { Plus, Minus, Trash2, Search, ShoppingCart, ClipboardList, CalendarClock } from 'lucide-react'
 import PageHeader from '../components/PageHeader'
 import Button from '../components/Button'
+import Paginador from '../components/Paginador'
 import { getVentas, createVenta, deleteVenta } from '../api/ventas'
 import { getProductos } from '../api/productos'
 import { leerSesion } from '../api/auth'
 import { getJornadaActiva, abrirJornada, cerrarJornada } from '../api/jornadas'
 import { downloadCSV, fechaCSV } from '../utils/export'
+import ConfirmDialog from '../components/ConfirmDialog'
 import toast from 'react-hot-toast'
 
 const fmt = (n) =>
@@ -18,12 +20,16 @@ export default function Ventas() {
   const [productos, setProductos] = useState([])
   const [view, setView] = useState('pos') // 'pos' | 'historial'
   const [busqueda, setBusqueda] = useState('')
+  const [busquedaHist, setBusquedaHist] = useState('')
+  const [pageHist, setPageHist] = useState(1)
   const [carrito, setCarrito] = useState([])
   const [cliente, setCliente] = useState('')
   const [jornada, setJornada] = useState(null)
   const [arqueo, setArqueo] = useState(null)
   const [abriendo, setAbriendo] = useState(false)
   const [cargando, setCargando] = useState(true)
+  const [confirmId, setConfirmId] = useState(null)
+  const buscadorRef = useRef(null)
 
   const sesion = leerSesion()
   const puedeEliminar = sesion?.rol === 'ADMIN'
@@ -117,14 +123,21 @@ export default function Ventas() {
       setCliente('')
       getVentas().then((r) => setVentas(r.data)).catch(console.error)
       toast.success(`Venta registrada por ${fmt(total)}`)
+      if (view === 'pos') buscadorRef.current?.focus()
     } catch (err) {
       toast.error(err.response?.data?.mensaje ?? 'Error al registrar la venta')
     }
   }
 
   const handleEliminar = async (id) => {
-    if (!confirm('¿Eliminar esta venta? Se revertirá el stock.')) return
-    try { await deleteVenta(id); getVentas().then((r) => setVentas(r.data)).catch(console.error) } catch { /* noop */ }
+    try {
+      await deleteVenta(id)
+      getVentas().then((r) => setVentas(r.data)).catch(console.error)
+    } catch {
+      /* noop */
+    } finally {
+      setConfirmId(null)
+    }
   }
 
   const exportarCSV = () =>
@@ -140,6 +153,17 @@ export default function Ventas() {
   const hoy = new Date().toDateString()
   const ventasHoy = ventas.filter((v) => new Date(v.fecha).toDateString() === hoy)
   const totalHoy = ventasHoy.reduce((a, v) => a + Number(v.total), 0)
+
+  const qHist = busquedaHist.trim().toLowerCase()
+  const ventasFiltradas = qHist
+    ? ventas.filter((v) =>
+        String(v.id).includes(qHist) ||
+        (v.nombreCliente || '').toLowerCase().includes(qHist) ||
+        (v.detalles || []).some((d) => d.productoNombre?.toLowerCase().includes(qHist)))
+    : ventas
+  const PAGE_HIST = 25
+  const totalPagHist = Math.max(1, Math.ceil(ventasFiltradas.length / PAGE_HIST))
+  const historialPag = ventasFiltradas.slice((pageHist - 1) * PAGE_HIST, pageHist * PAGE_HIST)
 
   const columns = [
     { key: 'id', label: '#', render: (v) => `#${v}` },
@@ -193,7 +217,7 @@ export default function Ventas() {
                 Abrió {jornada.abiertaPor} · {jornada.nroVentas} venta(s) · {fmt(jornada.totalVentas)}
               </p>
             </div>
-            <Button variant="danger" onClick={cerrarDia}>
+            <Button variant="secondary" onClick={cerrarDia}>
               Cerrar día
             </Button>
           </div>
@@ -221,9 +245,11 @@ export default function Ventas() {
             <div className="relative mb-4">
               <Search size={18} className="absolute top-1/2 -translate-y-1/2 left-3 text-[var(--muted)]" />
               <input
+                ref={buscadorRef}
                 value={busqueda}
                 onChange={(e) => setBusqueda(e.target.value)}
                 placeholder="Buscar producto…"
+                aria-label="Buscar producto"
                 className="w-full pl-10 pr-4 py-3 rounded-xl border border-[var(--border)] text-sm outline-none focus:ring-2 focus:ring-[var(--brand-orange)]/30"
                 style={{ background: 'var(--panel-2)', color: 'var(--ink)' }}
               />
@@ -237,9 +263,14 @@ export default function Ventas() {
                     key={p.id}
                     whileTap={{ scale: 0.96 }}
                     onClick={() => agregar(p)}
-                    className="card p-4 text-left flex flex-col gap-1 hover:border-[var(--brand-orange)] transition-colors"
+                    className="card p-4 text-left flex flex-col gap-1 relative hover:border-[var(--brand-orange)] transition-colors"
                     style={{ background: en ? 'var(--brand-yellow-soft)' : 'var(--panel)' }}
                   >
+                    {en && (
+                      <span className="absolute -top-2 -right-2 w-6 h-6 rounded-full brand-gradient text-white text-xs font-bold flex items-center justify-center shadow-lg">
+                        {en.qty}
+                      </span>
+                    )}
                     <span className="font-bold text-sm leading-tight" style={{ color: 'var(--ink)' }}>{p.nombre}</span>
                     <span className="font-num font-extrabold" style={{ color: 'var(--brand-orange)' }}>{fmt(p.precioVenta)}</span>
                     <span className="text-xs text-[var(--muted)]">Stock: {p.stockActual ?? '—'}</span>
@@ -272,12 +303,12 @@ export default function Ventas() {
                       <p className="text-xs text-[var(--muted)]">{fmt(c.precio)} c/u</p>
                     </div>
                     <div className="flex items-center gap-1">
-                      <button onClick={() => cambiarCantidad(c.id, -1)} className="w-7 h-7 rounded-md flex items-center justify-center border border-[var(--border)] hover:bg-[var(--panel)]" style={{ color: 'var(--ink)' }}><Minus size={14} /></button>
+                      <button onClick={() => cambiarCantidad(c.id, -1)} aria-label={`Quitar uno a ${c.nombre}`} className="w-7 h-7 rounded-md flex items-center justify-center border border-[var(--border)] hover:bg-[var(--panel)]" style={{ color: 'var(--ink)' }}><Minus size={14} /></button>
                       <span className="w-8 text-center font-bold text-sm" style={{ color: 'var(--ink)' }}>{c.qty}</span>
-                      <button onClick={() => cambiarCantidad(c.id, 1)} className="w-7 h-7 rounded-md flex items-center justify-center border border-[var(--border)] hover:bg-[var(--panel)]" style={{ color: 'var(--ink)' }}><Plus size={14} /></button>
+                      <button onClick={() => cambiarCantidad(c.id, 1)} aria-label={`Agregar uno a ${c.nombre}`} className="w-7 h-7 rounded-md flex items-center justify-center border border-[var(--border)] hover:bg-[var(--panel)]" style={{ color: 'var(--ink)' }}><Plus size={14} /></button>
                     </div>
                     <span className="w-16 text-right font-bold text-sm" style={{ color: 'var(--ink)' }}>{fmt(c.precio * c.qty)}</span>
-                    <button onClick={() => quitar(c.id)} className="text-[var(--brand-danger)] hover:bg-[#fde7e4] p-1 rounded-md"><Trash2 size={15} /></button>
+                    <button onClick={() => quitar(c.id)} aria-label={`Quitar ${c.nombre} del pedido`} className="text-[var(--brand-danger)] hover:bg-[#fde7e4] p-1 rounded-md"><Trash2 size={15} /></button>
                   </div>
                 ))}
               </div>
@@ -291,30 +322,44 @@ export default function Ventas() {
               </div>
             </div>
 
-            <input
-              value={cliente}
-              onChange={(e) => setCliente(e.target.value)}
-              placeholder="Cliente (opcional)"
-              maxLength={100}
-              className="w-full mb-3 px-3 py-2.5 rounded-lg border border-[var(--border)] text-sm outline-none focus:ring-2 focus:ring-[var(--brand-orange)]/30"
-              style={{ background: 'var(--panel-2)', color: 'var(--ink)' }}
-            />
+            <form onSubmit={confirmar}>
+              <input
+                value={cliente}
+                onChange={(e) => setCliente(e.target.value)}
+                placeholder="Cliente (opcional)"
+                aria-label="Nombre del cliente (opcional)"
+                maxLength={100}
+                className="w-full mb-3 px-3 py-2.5 rounded-lg border border-[var(--border)] text-sm outline-none focus:ring-2 focus:ring-[var(--brand-orange)]/30"
+                style={{ background: 'var(--panel-2)', color: 'var(--ink)' }}
+              />
 
-            <Button variant="success" onClick={confirmar} disabled={carrito.length === 0}>
-              Cobrar {total > 0 ? fmt(total) : ''}
-            </Button>
+              <Button type="submit" variant="success" disabled={carrito.length === 0}>
+                Cobrar {total > 0 ? fmt(total) : ''}
+              </Button>
+            </form>
           </div>
         </div>
       )}
 
       {view === 'historial' && (
         <>
-          <div className="flex justify-end mb-3">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-3">
+            <div className="relative flex-1">
+              <Search size={17} className="absolute top-1/2 -translate-y-1/2 left-3 text-[var(--muted)]" />
+              <input
+                value={busquedaHist}
+                onChange={(e) => { setBusquedaHist(e.target.value); setPageHist(1) }}
+                placeholder="Buscar por cliente, producto o número…"
+                aria-label="Buscar en el historial de ventas"
+                className="w-full pl-9 pr-4 py-2.5 rounded-xl border border-[var(--border)] text-sm outline-none focus:ring-2 focus:ring-[var(--brand-orange)]/30"
+                style={{ background: 'var(--panel-2)', color: 'var(--ink)' }}
+              />
+            </div>
             <Button variant="secondary" onClick={exportarCSV} disabled={ventas.length === 0}>
               Descargar CSV
             </Button>
           </div>
-          <div className="card overflow-hidden">
+<div className="card overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-sm min-w-[640px]">
               <thead>
@@ -324,15 +369,15 @@ export default function Ventas() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-[var(--border)]">
-                {ventas.length === 0 && (
-                  <tr><td colSpan={columns.length + 1} className="text-center py-12 muted text-sm">Sin ventas registradas</td></tr>
+                {ventasFiltradas.length === 0 && (
+                  <tr><td colSpan={columns.length + 1} className="text-center py-12 muted text-sm">{qHist ? 'Sin coincidencias' : 'Sin ventas registradas'}</td></tr>
                 )}
-                {ventas.map((v) => (
+                {historialPag.map((v) => (
                   <tr key={v.id} className="hover:bg-[var(--panel-2)] transition-colors">
                     {columns.map((c) => <td key={c.key} className="px-5 py-3.5" style={{ color: 'var(--ink)' }}>{c.render ? c.render(v[c.key]) : v[c.key]}</td>)}
                     {puedeEliminar && (
                       <td className="px-5 py-3.5 text-right">
-                        <button onClick={() => handleEliminar(v.id)} className="text-xs px-3 py-1.5 rounded-lg bg-[#fde7e4] text-[var(--brand-danger)] hover:bg-[#fbd4ce] font-bold transition-colors">
+                        <button onClick={() => setConfirmId(v.id)} className="text-xs px-3 py-1.5 rounded-lg bg-[#fde7e4] text-[var(--brand-danger)] hover:bg-[#fbd4ce] font-bold transition-colors">
                           Eliminar
                         </button>
                       </td>
@@ -342,11 +387,20 @@ export default function Ventas() {
               </tbody>
             </table>
           </div>
+          <Paginador page={Math.min(pageHist, totalPagHist)} totalPages={totalPagHist} total={ventasFiltradas.length} onPage={setPageHist} />
         </div>
         </>
       )}
     </>
       )}
+
+      <ConfirmDialog
+        open={!!confirmId}
+        title="Eliminar venta"
+        message="¿Eliminar esta venta? Se revertirá el stock correspondiente."
+        onConfirm={() => handleEliminar(confirmId)}
+        onCancel={() => setConfirmId(null)}
+      />
     </div>
   )
 }

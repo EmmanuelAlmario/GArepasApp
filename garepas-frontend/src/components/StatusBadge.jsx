@@ -12,7 +12,7 @@ export default function StatusBadge({ activo }) {
 
 export function BadgePill({ children, tone = 'amber' }) {
   const tones = {
-    amber: 'bg-[#fff3d1] text-[#8a5a00] border-[#f2cf7f]',
+    amber: 'bg-[#fff3d1] text-[var(--brand-orange)] border-[var(--border-strong)]',
     red: 'bg-[#fde7e4] text-[var(--brand-danger)] border-[#f8c8bf]',
     green: 'bg-[#e7f3db] text-[var(--brand-success)] border-[#cfe6b6]',
     gray: 'bg-[var(--panel-2)] text-[var(--muted)] border-[var(--border)]',

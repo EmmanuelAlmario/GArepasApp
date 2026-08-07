@@ -4,7 +4,9 @@ import com.garepas.garepasapp.entity.Auditoria;
 import com.garepas.garepasapp.repository.AuditoriaRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -49,12 +51,22 @@ public class AuditoriaServicio {
 
     @Transactional(readOnly = true)
     public List<Auditoria> ultimas(int limite) {
-        return auditoriaRepository.findAllByOrderByFechaDesc(PageRequest.of(0, Math.min(Math.max(limite, 1), 200)));
+        return auditoriaRepository.findAllByOrderByFechaDesc(PageRequest.of(0, Math.min(Math.max(limite, 1), 200))).getContent();
     }
 
     @Transactional(readOnly = true)
     public List<Auditoria> porUsuario(String usuario, int limite) {
         return auditoriaRepository.findByUsuarioIgnoreCaseOrderByFechaDesc(
-                usuario, PageRequest.of(0, Math.min(Math.max(limite, 1), 200)));
+                usuario, PageRequest.of(0, Math.min(Math.max(limite, 1), 200))).getContent();
+    }
+
+    @Transactional(readOnly = true)
+    public Page<Auditoria> paginar(Pageable pageable) {
+        return auditoriaRepository.findAllByOrderByFechaDesc(pageable);
+    }
+
+    @Transactional(readOnly = true)
+    public Page<Auditoria> porUsuarioPaginado(String usuario, Pageable pageable) {
+        return auditoriaRepository.findByUsuarioIgnoreCaseOrderByFechaDesc(usuario, pageable);
     }
 }

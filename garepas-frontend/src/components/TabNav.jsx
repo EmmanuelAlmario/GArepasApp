@@ -15,9 +15,10 @@ export default function TabNav({ tabs, active, onChange }) {
               }`}
             >
               {selected && (
-                <motion.span
+                                <motion.span
                   layoutId="tabHighlight"
-                  className="absolute inset-0 rounded-lg bg-[#ffe7a3] border border-[#f2c869]"
+                  className="absolute inset-0 rounded-lg border"
+                  style={{ background: 'var(--brand-yellow-soft)', borderColor: 'var(--border-strong)' }}
                   transition={{ type: 'spring', stiffness: 500, damping: 30 }}
                 />
               )}

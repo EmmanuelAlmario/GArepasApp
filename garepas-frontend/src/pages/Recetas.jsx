@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import PageHeader from '../components/PageHeader'
 import DataTable from '../components/DataTable'
+import ConfirmDialog from '../components/ConfirmDialog'
 import Modal from '../components/Modal'
 import Button from '../components/Button'
 import FormField from '../components/FormField'
@@ -26,6 +27,7 @@ export default function Recetas({ embedded = false }) {
   const [modal, setModal] = useState(false)
   const [form, setForm] = useState(inicial)
   const [editando, setEditando] = useState(null)
+  const [confirmId, setConfirmId] = useState(null)
 
   const cargar = () =>
     getRecetas()
@@ -101,12 +103,13 @@ export default function Recetas({ embedded = false }) {
   }
 
   const handleEliminar = async (id) => {
-    if (!confirm('¿Eliminar esta receta?')) return
     try {
       await deleteReceta(id)
       cargar()
     } catch (err) {
       toast.error(err.response?.data?.mensaje ?? 'Error al eliminar')
+    } finally {
+      setConfirmId(null)
     }
   }
 
@@ -146,7 +149,13 @@ export default function Recetas({ embedded = false }) {
         </div>
       )}
 
-      <DataTable columns={columns} data={recetas} onEdit={handleEditar} onDelete={handleEliminar} loading={cargando} />
+      <DataTable
+              columns={columns}
+              data={recetas}
+              onEdit={handleEditar}
+              onDelete={setConfirmId}
+              loading={cargando}
+            />
 
       {modal && (
         <Modal title={editando ? 'Editar receta' : 'Agregar receta'} onClose={() => setModal(false)}>
@@ -221,6 +230,14 @@ export default function Recetas({ embedded = false }) {
           </form>
         </Modal>
       )}
+
+      <ConfirmDialog
+        open={!!confirmId}
+        title="Eliminar receta"
+        message="¿Eliminar esta receta? Esta acción no se puede deshacer."
+        onConfirm={() => handleEliminar(confirmId)}
+        onCancel={() => setConfirmId(null)}
+      />
     </div>
   )
 }

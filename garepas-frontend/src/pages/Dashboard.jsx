@@ -32,8 +32,8 @@ const fmtShort = (n) => {
 const CustomTooltip = ({ active, payload, label }) => {
   if (!active || !payload?.length) return null
   return (
-    <div className="bg-white border border-gray-100 shadow-lg rounded-lg px-4 py-3 text-sm">
-      <p className="font-semibold text-gray-700 mb-1">{label}</p>
+    <div className="rounded-lg px-4 py-3 text-sm shadow-lg" style={{ background: 'var(--panel)', border: '1px solid var(--border)' }}>
+      <p className="font-semibold mb-1" style={{ color: 'var(--ink)' }}>{label}</p>
       {payload.map((p) => (
         <p key={p.name} style={{ color: p.color }} className="font-medium">
           {p.name}: {fmt(p.value)}
@@ -46,7 +46,7 @@ const CustomTooltip = ({ active, payload, label }) => {
 const CustomDonaTooltip = ({ active, payload }) => {
   if (!active || !payload?.length) return null
   return (
-    <div className="bg-white border border-gray-100 shadow-lg rounded-lg px-4 py-3 text-sm">
+    <div className="rounded-lg px-4 py-3 text-sm shadow-lg" style={{ background: 'var(--panel)', border: '1px solid var(--border)' }}>
       <p className="font-semibold" style={{ color: payload[0].payload.fill }}>
         {payload[0].name}: {fmt(payload[0].value)}
       </p>
@@ -350,16 +350,16 @@ export default function Dashboard() {
           ) : (
             <ResponsiveContainer width="100%" height={220}>
               <BarChart data={dataMes} barCategoryGap="30%" barGap={4}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
                 <XAxis
                   dataKey="mes"
-                  tick={{ fontSize: 11, fill: '#9ca3af' }}
+                  tick={{ fontSize: 11, fill: 'var(--muted)' }}
                   axisLine={false}
                   tickLine={false}
                 />
                 <YAxis
                   tickFormatter={fmtShort}
-                  tick={{ fontSize: 11, fill: '#9ca3af' }}
+                  tick={{ fontSize: 11, fill: 'var(--muted)' }}
                   axisLine={false}
                   tickLine={false}
                   width={55}
@@ -437,20 +437,20 @@ export default function Dashboard() {
             <div className="overflow-x-auto">
               <table className="w-full text-sm min-w-[320px]">
                 <thead>
-                  <tr className="border-b border-gray-100">
-                    <th className="text-left pb-2 text-xs text-gray-400 font-semibold uppercase">ID</th>
-                    <th className="text-left pb-2 text-xs text-gray-400 font-semibold uppercase">Fecha</th>
-                    <th className="text-right pb-2 text-xs text-gray-400 font-semibold uppercase">Total</th>
+                  <tr className="border-b border-[var(--border)]">
+                    <th className="text-left pb-2 text-xs text-[var(--muted)] font-semibold uppercase">ID</th>
+                    <th className="text-left pb-2 text-xs text-[var(--muted)] font-semibold uppercase">Fecha</th>
+                    <th className="text-right pb-2 text-xs text-[var(--muted)] font-semibold uppercase">Total</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-50">
+                <tbody className="divide-y divide-[var(--border)]">
                   {datos.ventas.slice(0, 5).map((v) => (
                     <tr key={v.id}>
-                      <td className="py-2.5 text-gray-500">#{v.id}</td>
-                      <td className="py-2.5 text-gray-700">
+                      <td className="py-2.5 text-[var(--muted)]">#{v.id}</td>
+                      <td className="py-2.5 text-[var(--ink-soft)]">
                         {new Date(v.fecha).toLocaleDateString('es-CO')}
                       </td>
-                      <td className="py-2.5 text-right font-medium text-gray-800">{fmt(v.total)}</td>
+                      <td className="py-2.5 text-right font-medium text-[var(--ink)]">{fmt(v.total)}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -467,18 +467,18 @@ export default function Dashboard() {
             <div className="overflow-x-auto">
               <table className="w-full text-sm min-w-[380px]">
                 <thead>
-                  <tr className="border-b border-gray-100">
-                    <th className="text-left pb-2 text-xs text-gray-400 font-semibold uppercase">Descripción</th>
-                    <th className="text-left pb-2 text-xs text-gray-400 font-semibold uppercase">Categoría</th>
-                    <th className="text-right pb-2 text-xs text-gray-400 font-semibold uppercase">Monto</th>
+                  <tr className="border-b border-[var(--border)]">
+                    <th className="text-left pb-2 text-xs text-[var(--muted)] font-semibold uppercase">Descripción</th>
+                    <th className="text-left pb-2 text-xs text-[var(--muted)] font-semibold uppercase">Categoría</th>
+                    <th className="text-right pb-2 text-xs text-[var(--muted)] font-semibold uppercase">Monto</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-50">
+                <tbody className="divide-y divide-[var(--border)]">
                   {datos.gastos.slice(0, 5).map((g) => (
                     <tr key={g.id}>
-                      <td className="py-2.5 text-gray-700 truncate max-w-[150px]">{g.descripcion}</td>
-                      <td className="py-2.5 text-gray-500">{g.categoria}</td>
-                      <td className="py-2.5 text-right font-medium text-gray-800">{fmt(g.monto)}</td>
+                      <td className="py-2.5 text-[var(--ink-soft)] truncate max-w-[150px]">{g.descripcion}</td>
+                      <td className="py-2.5 text-[var(--muted)]">{g.categoria}</td>
+                      <td className="py-2.5 text-right font-medium text-[var(--ink)]">{fmt(g.monto)}</td>
                     </tr>
                   ))}
                 </tbody>
