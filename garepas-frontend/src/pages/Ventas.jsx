@@ -23,14 +23,19 @@ export default function Ventas() {
   const [jornada, setJornada] = useState(null)
   const [arqueo, setArqueo] = useState(null)
   const [abriendo, setAbriendo] = useState(false)
+  const [cargando, setCargando] = useState(true)
 
   const sesion = leerSesion()
   const puedeEliminar = sesion?.rol === 'ADMIN'
 
   useEffect(() => {
-    getVentas().then((r) => setVentas(r.data)).catch(console.error)
-    getProductos().then((r) => setProductos(r.data.filter((p) => p.activo))).catch(console.error)
-    getJornadaActiva().then((r) => setJornada(r.data)).catch(console.error)
+    let activo = true
+    Promise.allSettled([
+      getVentas().then((r) => activo && setVentas(r.data)),
+      getProductos().then((r) => activo && setProductos(r.data.filter((p) => p.activo))),
+      getJornadaActiva().then((r) => activo && setJornada(r.data)),
+    ]).finally(() => activo && setCargando(false))
+    return () => { activo = false }
   }, [])
 
   const abrirDia = async () => {
@@ -157,6 +162,24 @@ export default function Ventas() {
         </div>
       </PageHeader>
 
+      {cargando ? (
+        <div className="space-y-4">
+          <div className="card p-5">
+            <div className="skeleton h-4 w-44 mb-3" />
+            <div className="skeleton h-5 w-72" />
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+            {[0, 1, 2, 3, 4, 5].map((i) => (
+              <div key={i} className="card p-4">
+                <div className="skeleton h-3 w-24 mb-2" />
+                <div className="skeleton h-6 w-16" />
+                <div className="skeleton h-3 w-12 mt-2" />
+              </div>
+            ))}
+          </div>
+        </div>
+      ) : (
+        <>
       {/* Jornada: abrir / cerrar / arqueo */}
       <div className="mb-4">
         {jornada ? (
@@ -321,6 +344,8 @@ export default function Ventas() {
           </div>
         </div>
         </>
+      )}
+    </>
       )}
     </div>
   )

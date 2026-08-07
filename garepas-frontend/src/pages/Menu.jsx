@@ -7,11 +7,15 @@ const fmt = (n) =>
 export default function Menu() {
   const [productos, setProductos] = useState([])
   const [busqueda, setBusqueda] = useState('')
+  const [cargando, setCargando] = useState(true)
 
   useEffect(() => {
+    let activo = true
     getProductosPublico()
-      .then((r) => setProductos(r.data))
-      .catch(() => setProductos([]))
+      .then((r) => activo && setProductos(r.data))
+      .catch(() => activo && setProductos([]))
+      .finally(() => activo && setCargando(false))
+    return () => { activo = false }
   }, [])
 
   const filtrados = productos.filter((p) =>
@@ -34,7 +38,16 @@ export default function Menu() {
           style={{ background: 'var(--panel)', color: 'var(--ink)' }}
         />
 
-        {filtrados.length === 0 ? (
+        {cargando ? (
+          <div className="space-y-3">
+            {[0, 1, 2, 3].map((i) => (
+              <div key={i} className="card px-5 py-4">
+                <div className="skeleton h-4 w-3/5 mb-2" />
+                <div className="skeleton h-3 w-16" />
+              </div>
+            ))}
+          </div>
+        ) : filtrados.length === 0 ? (
           <p className="muted text-center text-sm py-16">Sin productos disponibles por ahora</p>
         ) : (
           <div className="space-y-3">

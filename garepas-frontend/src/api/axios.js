@@ -31,9 +31,8 @@ api.interceptors.response.use(
   (err) => {
     if (err.response?.status === 401 && err.config?.url !== '/api/auth/login') {
       localStorage.removeItem('garepas_auth')
-      if (window.location.pathname !== '/login') {
-        window.location.href = '/login'
-      }
+      // Notifica a React (App) para cerrar sesión sin recargar la página.
+      window.dispatchEvent(new CustomEvent('garepas:logout'))
     }
     return Promise.reject(err)
   },

@@ -32,10 +32,18 @@ export default function Empleados({ embedded = false }) {
   const [seleccionado, setSeleccionado] = useState(null)
   const [historial, setHistorial] = useState([])
   const [diasPago, setDiasPago] = useState('')
+  const [cargando, setCargando] = useState(true)
 
   const cargar = () => getEmpleados().then((r) => setEmpleados(r.data)).catch(console.error)
 
-  useEffect(() => { cargar() }, [])
+  useEffect(() => {
+    let activo = true
+    getEmpleados()
+      .then((r) => activo && setEmpleados(r.data))
+      .catch(console.error)
+      .finally(() => activo && setCargando(false))
+    return () => { activo = false }
+  }, [])
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target
@@ -153,6 +161,11 @@ export default function Empleados({ embedded = false }) {
         </div>
       )}
 
+      {cargando ? (
+        <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden p-8 space-y-3">
+          {[0, 1, 2].map((i) => <div key={i} className="skeleton h-6 w-full" />)}
+        </div>
+      ) : (
       <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
         <table className="w-full text-sm min-w-[760px]">
@@ -235,6 +248,7 @@ export default function Empleados({ embedded = false }) {
         </table>
         </div>
       </div>
+      )}
 
       {/* Modal empleado */}
       {modalEmpleado && (

@@ -1,10 +1,11 @@
-import { useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { AnimatePresence } from 'framer-motion'
 import { Menu } from 'lucide-react'
 import Sidebar from './components/Sidebar'
 import PageTransition from './components/PageTransition'
 import useDarkMode from './hooks/useDarkMode'
+import { toast } from 'react-hot-toast'
 import Dashboard from './pages/Dashboard'
 import Gestion from './pages/Gestion'
 import Reportes from './pages/Reportes'
@@ -78,15 +79,24 @@ export default function App() {
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const { theme, toggle } = useDarkMode()
 
-  const handleLogin = (data) => {
-    guardarSesion(data)
-    setAuth(data)
-  }
-
-  const handleLogout = () => {
+  const handleLogout = useCallback(() => {
     cerrarSesion()
     setAuth(null)
     setSidebarOpen(false)
+  }, [])
+
+  useEffect(() => {
+    const onUnauthorized = () => {
+      toast.error('Tu sesión expiró. Inicia sesión de nuevo.')
+      handleLogout()
+    }
+    window.addEventListener('garepas:logout', onUnauthorized)
+    return () => window.removeEventListener('garepas:logout', onUnauthorized)
+  }, [handleLogout])
+
+  const handleLogin = (data) => {
+    guardarSesion(data)
+    setAuth(data)
   }
 
   return (

@@ -21,10 +21,18 @@ export default function Usuarios({ embedded = false }) {
   const [modal, setModal] = useState(false)
   const [form, setForm] = useState(inicialForm)
   const [editando, setEditando] = useState(null)
+  const [cargando, setCargando] = useState(true)
 
   const cargar = () => getUsuarios().then((r) => setUsuarios(r.data)).catch(console.error)
 
-  useEffect(() => { cargar() }, [])
+  useEffect(() => {
+    let activo = true
+    getUsuarios()
+      .then((r) => activo && setUsuarios(r.data))
+      .catch(console.error)
+      .finally(() => activo && setCargando(false))
+    return () => { activo = false }
+  }, [])
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target
@@ -96,6 +104,11 @@ export default function Usuarios({ embedded = false }) {
       )}
 
       <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
+        {cargando ? (
+          <div className="p-8 space-y-3">
+            {[0, 1, 2].map((i) => <div key={i} className="skeleton h-6 w-full" />)}
+          </div>
+        ) : (
         <div className="overflow-x-auto">
           <table className="w-full text-sm min-w-[600px]">
             <thead>
@@ -146,6 +159,7 @@ export default function Usuarios({ embedded = false }) {
             </tbody>
           </table>
         </div>
+        )}
       </div>
 
       {modal && (

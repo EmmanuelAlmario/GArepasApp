@@ -21,14 +21,17 @@ export default function Producciones() {
   const [form, setForm] = useState(inicial)
   const [verificandoId, setVerificandoId] = useState(null)
   const [faltantes, setFaltantes] = useState(null)
+  const [cargando, setCargando] = useState(true)
 
   const cargar = () => getProducciones().then((r) => setProducciones(r.data)).catch(console.error)
 
   useEffect(() => {
-    cargar()
-    getProductos()
-      .then((r) => setProductos(r.data.filter((p) => p.activo && p.recetaId)))
-      .catch(console.error)
+    let activo = true
+    Promise.allSettled([
+      getProducciones().then((r) => activo && setProducciones(r.data)),
+      getProductos().then((r) => activo && setProductos(r.data.filter((p) => p.activo && p.recetaId))),
+    ]).finally(() => activo && setCargando(false))
+    return () => { activo = false }
   }, [])
 
   const handleChange = (e) => {
@@ -172,7 +175,7 @@ export default function Producciones() {
         </Button>
       </PageHeader>
 
-      <DataTable columns={columns} data={producciones} />
+      <DataTable columns={columns} data={producciones} loading={cargando} />
 
       {modal && (
         <Modal title="Registrar producción" onClose={() => setModal(false)}>
