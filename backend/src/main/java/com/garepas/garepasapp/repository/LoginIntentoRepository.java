@@ -13,4 +13,6 @@ public interface LoginIntentoRepository extends JpaRepository<LoginIntento, Long
             String username, LocalDateTime fecha);
 
     void deleteByUsernameIgnoreCase(String username);
+
+    long deleteByFechaBefore(LocalDateTime fecha);
 }

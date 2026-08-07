@@ -13,4 +13,6 @@ public interface AuditoriaRepository extends JpaRepository<Auditoria, Long> {
     List<Auditoria> findAllByOrderByFechaDesc(Pageable pageable);
 
     List<Auditoria> findByUsuarioIgnoreCaseOrderByFechaDesc(String usuario, Pageable pageable);
+
+    long deleteByFechaBefore(java.time.LocalDateTime fecha);
 }
