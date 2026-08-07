@@ -58,6 +58,7 @@ public class VentaService {
         Venta venta = Venta.builder()
                 .fecha(LocalDateTime.now())
                 .total(BigDecimal.ZERO)
+                .nombreCliente(request.nombreCliente())
                 .jornadaId(obtenerJornadaActivaId())
                 .build();
 
@@ -65,7 +66,7 @@ public class VentaService {
         BigDecimal total = BigDecimal.ZERO;
 
         for (var detalleRequest : request.detalles()) {
-            Producto producto = productoRepository.findById(detalleRequest.productoId())
+            Producto producto = productoRepository.findByIdConLock(detalleRequest.productoId())
                     .orElseThrow(() -> new RecursoNoEncontradoException("Producto", detalleRequest.productoId()));
 
             if (!producto.getActivo()) {
@@ -108,7 +109,8 @@ public class VentaService {
                 .orElseThrow(() -> new RecursoNoEncontradoException("Venta", id));
 
         for (DetalleVenta detalle : venta.getDetalles()) {
-            Producto producto = detalle.getProducto();
+            Producto producto = productoRepository.findByIdConLock(detalle.getProducto().getId())
+                    .orElseThrow(() -> new RecursoNoEncontradoException("Producto", detalle.getProducto().getId()));
             producto.setStockActual(producto.getStockActual() + detalle.getCantidad());
             productoRepository.save(producto);
         }

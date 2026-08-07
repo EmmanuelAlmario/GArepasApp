@@ -7,9 +7,11 @@ import PageTransition from './components/PageTransition'
 import useDarkMode from './hooks/useDarkMode'
 import Dashboard from './pages/Dashboard'
 import Gestion from './pages/Gestion'
+import Reportes from './pages/Reportes'
 import Ventas from './pages/Ventas'
 import Producciones from './pages/Producciones'
 import Usuarios from './pages/Usuarios'
+import Auditoria from './pages/Auditoria'
 import MenuPublico from './pages/Menu'
 import Login from './pages/Login'
 import { leerSesion, guardarSesion, cerrarSesion } from './api/auth'
@@ -51,8 +53,10 @@ function Shell({ auth, sidebarOpen, setSidebarOpen, dark, toggle, onLogout }) {
                   <>
                     <Route path="/" element={<Dashboard />} />
                     <Route path="/gestion" element={<Gestion />} />
+                    <Route path="/reportes" element={<Reportes />} />
                     <Route path="/producciones" element={<Producciones />} />
                     <Route path="/usuarios" element={<Usuarios />} />
+                    <Route path="/auditoria" element={<Auditoria />} />
                   </>
                 ) : (
                   <Route path="/" element={<Navigate to="/ventas" replace />} />

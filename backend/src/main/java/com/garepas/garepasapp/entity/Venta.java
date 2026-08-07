@@ -26,6 +26,10 @@ public class Venta {
     @Column(nullable = false, precision = 12, scale = 2)
     private BigDecimal total;
 
+    /** Nombre del cliente (texto libre, no se liga a deudas ni cuentas). */
+    @Column(name = "nombre_cliente", length = 100)
+    private String nombreCliente;
+
     /** Jornada de operación a la que pertenece esta venta (null = fuera de jornada). */
     @Column(name = "jornada_id")
     private Long jornadaId;

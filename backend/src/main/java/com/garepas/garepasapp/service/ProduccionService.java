@@ -135,7 +135,8 @@ public class ProduccionService {
     private List<DetalleProduccion> construirDetalles(Produccion produccion, Producto producto, Integer cantidad) {
         List<DetalleProduccion> detalles = new ArrayList<>();
         for (DetalleReceta detalleReceta : producto.getReceta().getDetalles()) {
-            Insumo insumo = detalleReceta.getInsumo();
+            Insumo insumo = insumoRepository.findByIdConLock(detalleReceta.getInsumo().getId())
+                    .orElseThrow(() -> new RecursoNoEncontradoException("Insumo", detalleReceta.getInsumo().getId()));
             BigDecimal cantidadRequerida = detalleReceta.getCantidad()
                     .multiply(BigDecimal.valueOf(cantidad));
             boolean suficiente = insumo.getStockActual().compareTo(cantidadRequerida) >= 0;
@@ -163,10 +164,12 @@ public class ProduccionService {
      * - Crea el gasto automático de materia prima asociado.
      */
     private void aplicarProduccion(Produccion produccion) {
-        Producto producto = produccion.getProducto();
+        Producto producto = productoRepository.findByIdConLock(produccion.getProducto().getId())
+                .orElseThrow(() -> new RecursoNoEncontradoException("Producto", produccion.getProducto().getId()));
 
         for (DetalleProduccion detalle : produccion.getDetalles()) {
-            Insumo insumo = detalle.getInsumo();
+            Insumo insumo = insumoRepository.findByIdConLock(detalle.getInsumo().getId())
+                    .orElseThrow(() -> new RecursoNoEncontradoException("Insumo", detalle.getInsumo().getId()));
             insumo.setStockActual(insumo.getStockActual().subtract(detalle.getCantidadRequerida()));
             insumoRepository.save(insumo);
         }
@@ -196,12 +199,14 @@ public class ProduccionService {
         // Solo se revierte stock si la producción estaba COMPLETADA
         if (produccion.getEstado() == EstadoProduccion.COMPLETADA) {
             for (DetalleProduccion detalle : produccion.getDetalles()) {
-                Insumo insumo = detalle.getInsumo();
+                Insumo insumo = insumoRepository.findByIdConLock(detalle.getInsumo().getId())
+                        .orElseThrow(() -> new RecursoNoEncontradoException("Insumo", detalle.getInsumo().getId()));
                 insumo.setStockActual(insumo.getStockActual().add(detalle.getCantidadUsada()));
                 insumoRepository.save(insumo);
             }
 
-            Producto producto = produccion.getProducto();
+            Producto producto = productoRepository.findByIdConLock(produccion.getProducto().getId())
+                    .orElseThrow(() -> new RecursoNoEncontradoException("Producto", produccion.getProducto().getId()));
             producto.setStockActual(producto.getStockActual() - produccion.getCantidad());
             productoRepository.save(producto);
 

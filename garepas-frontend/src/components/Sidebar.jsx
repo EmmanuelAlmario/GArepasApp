@@ -1,6 +1,6 @@
 import { NavLink } from 'react-router-dom'
 import {
-  LayoutDashboard, ClipboardList, ShoppingCart, Factory, Users, X, LogOut, Sun, Moon,
+  LayoutDashboard, ClipboardList, ShoppingCart, Factory, Users, X, LogOut, Sun, Moon, BarChart3, ScrollText,
 } from 'lucide-react'
 import { motion } from 'framer-motion'
 
@@ -10,6 +10,7 @@ const GROUPS = [
     items: [
       { to: '/', label: 'Dashboard', icon: LayoutDashboard, roles: ['ADMIN'] },
       { to: '/gestion', label: 'Inventario', icon: ClipboardList, roles: ['ADMIN'] },
+      { to: '/reportes', label: 'Reportes', icon: BarChart3, roles: ['ADMIN'] },
       { to: '/producciones', label: 'Producciones', icon: Factory, roles: ['ADMIN'] },
     ],
   },
@@ -19,7 +20,10 @@ const GROUPS = [
   },
   {
     label: 'Administración',
-    items: [{ to: '/usuarios', label: 'Usuarios', icon: Users, roles: ['ADMIN'] }],
+    items: [
+      { to: '/usuarios', label: 'Usuarios', icon: Users, roles: ['ADMIN'] },
+      { to: '/auditoria', label: 'Auditoría', icon: ScrollText, roles: ['ADMIN'] },
+    ],
   },
 ]
 

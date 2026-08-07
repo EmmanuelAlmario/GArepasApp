@@ -28,13 +28,19 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         String header = request.getHeader("Authorization");
         if (header != null && header.startsWith("Bearer ")) {
             String token = header.substring(7);
-            if (tokenProvider.esValido(token)) {
-                String username = tokenProvider.obtenerUsername(token);
-                UserDetails userDetails = userDetailsService.loadUserByUsername(username);
-                var auth = new UsernamePasswordAuthenticationToken(
-                        userDetails, null, userDetails.getAuthorities());
-                auth.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-                SecurityContextHolder.getContext().setAuthentication(auth);
+            // Si el token es inválido, expiró o el usuario fue desactivado,
+            // se deja sin autenticación (anónimo) → Spring devuelve 401 limpio.
+            try {
+                if (tokenProvider.esValido(token)) {
+                    String username = tokenProvider.obtenerUsername(token);
+                    UserDetails userDetails = userDetailsService.loadUserByUsername(username);
+                    var auth = new UsernamePasswordAuthenticationToken(
+                            userDetails, null, userDetails.getAuthorities());
+                    auth.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                    SecurityContextHolder.getContext().setAuthentication(auth);
+                }
+            } catch (Exception ex) {
+                SecurityContextHolder.clearContext();
             }
         }
         filterChain.doFilter(request, response);

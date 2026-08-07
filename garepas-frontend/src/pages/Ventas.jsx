@@ -19,6 +19,7 @@ export default function Ventas() {
   const [view, setView] = useState('pos') // 'pos' | 'historial'
   const [busqueda, setBusqueda] = useState('')
   const [carrito, setCarrito] = useState([])
+  const [cliente, setCliente] = useState('')
   const [jornada, setJornada] = useState(null)
   const [arqueo, setArqueo] = useState(null)
   const [abriendo, setAbriendo] = useState(false)
@@ -104,10 +105,11 @@ export default function Ventas() {
 
   const confirmar = async () => {
     if (carrito.length === 0) return
-    const payload = { detalles: carrito.map((c) => ({ productoId: c.id, cantidad: c.qty })) }
+    const payload = { nombreCliente: cliente.trim() || null, detalles: carrito.map((c) => ({ productoId: c.id, cantidad: c.qty })) }
     try {
       await createVenta(payload)
       setCarrito([])
+      setCliente('')
       getVentas().then((r) => setVentas(r.data)).catch(console.error)
       toast.success(`Venta registrada por ${fmt(total)}`)
     } catch (err) {
@@ -124,6 +126,7 @@ export default function Ventas() {
     downloadCSV('ventas', [
       { label: 'No.', get: (v) => `#${v.id}` },
       { label: 'Fecha', get: (v) => fechaCSV(v.fecha) },
+      { label: 'Cliente', get: (v) => v.nombreCliente || '' },
       { label: 'Productos', get: (v) => v.detalles?.map((d) => `${d.productoNombre} x${d.cantidad}`).join('; ') || '' },
       { label: 'Cantidad', get: (v) => v.detalles?.reduce((a, d) => a + d.cantidad, 0) || 0 },
       { label: 'Total', get: (v) => Number(v.total) },
@@ -136,6 +139,7 @@ export default function Ventas() {
   const columns = [
     { key: 'id', label: '#', render: (v) => `#${v}` },
     { key: 'fecha', label: 'Fecha', render: (v) => new Date(v).toLocaleString('es-CO', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }) },
+    { key: 'nombreCliente', label: 'Cliente', render: (v) => v || '—' },
     { key: 'detalles', label: 'Productos', render: (v) => `${v?.length ?? 0} producto(s)` },
     { key: 'total', label: 'Total', render: (v) => fmt(v) },
   ]
@@ -263,6 +267,15 @@ export default function Ventas() {
                 <span className="font-num text-2xl font-extrabold" style={{ color: 'var(--brand-orange)' }}>{fmt(total)}</span>
               </div>
             </div>
+
+            <input
+              value={cliente}
+              onChange={(e) => setCliente(e.target.value)}
+              placeholder="Cliente (opcional)"
+              maxLength={100}
+              className="w-full mb-3 px-3 py-2.5 rounded-lg border border-[var(--border)] text-sm outline-none focus:ring-2 focus:ring-[var(--brand-orange)]/30"
+              style={{ background: 'var(--panel-2)', color: 'var(--ink)' }}
+            />
 
             <Button variant="success" onClick={confirmar} disabled={carrito.length === 0}>
               Cobrar {total > 0 ? fmt(total) : ''}

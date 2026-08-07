@@ -49,4 +49,7 @@ public class Insumo {
 
     @Column(nullable = false)
     private Boolean activo;
+
+    @Version
+    private Long version;
 }

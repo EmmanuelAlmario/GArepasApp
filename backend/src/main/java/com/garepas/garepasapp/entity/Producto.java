@@ -40,4 +40,7 @@ public class Producto {
 
     @Column(nullable = false)
     private Boolean activo;
+
+    @Version
+    private Long version;
 }

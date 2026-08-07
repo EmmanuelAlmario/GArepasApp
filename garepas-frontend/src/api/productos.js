@@ -1,6 +1,7 @@
 import api from './axios'
 
 export const getProductos = () => api.get('/api/productos')
+export const getProductosPublico = () => api.get('/api/publico/productos/activos')
 export const getProductoById = (id) => api.get(`/api/productos/${id}`)
 export const createProducto = (data) => api.post('/api/productos', data)
 export const updateProducto = (id, data) => api.put(`/api/productos/${id}`, data)

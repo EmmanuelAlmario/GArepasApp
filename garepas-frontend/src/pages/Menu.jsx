@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { getProductos } from '../api/productos'
+import { getProductosPublico } from '../api/productos'
 
 const fmt = (n) =>
   new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(n || 0)
@@ -9,8 +9,8 @@ export default function Menu() {
   const [busqueda, setBusqueda] = useState('')
 
   useEffect(() => {
-    getProductos()
-      .then((r) => setProductos(r.data.filter((p) => p.activo)))
+    getProductosPublico()
+      .then((r) => setProductos(r.data))
       .catch(() => setProductos([]))
   }, [])
 
