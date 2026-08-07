@@ -20,8 +20,13 @@ public interface VentaRepository extends JpaRepository<Venta, Long> {
     @EntityGraph(attributePaths = {"detalles", "detalles.producto"})
     List<Venta> findAllByOrderByFechaDesc();
 
-    @EntityGraph(attributePaths = {"detalles", "detalles.producto"})
+    // Sin @EntityGraph: la paginación con fetch de colecciones se aplica en memoria
+    // y eso rompe el tamaño real de la página. Los detalles se cargan aparte.
     Page<Venta> findAllBy(Pageable pageable);
+
+    @Query("SELECT d FROM DetalleVenta d JOIN FETCH d.producto WHERE d.venta.id IN :ids")
+    java.util.List<com.garepas.garepasapp.entity.DetalleVenta> findDetallesPorVentaIds(
+            @Param("ids") java.util.Collection<Long> ids);
 
     @EntityGraph(attributePaths = {"detalles", "detalles.producto"})
     Optional<Venta> findById(Long id);

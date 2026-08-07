@@ -7,4 +7,12 @@ export default defineConfig({
     react(),
     tailwindcss()
   ],
+  test: {
+    environment: 'jsdom',
+    globals: true,
+    setupFiles: './src/test/setup.js',
+    env: {
+      VITE_API_URL: 'http://backend.test/api',
+    },
+  },
 })

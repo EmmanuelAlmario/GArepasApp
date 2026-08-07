@@ -27,6 +27,7 @@ export function downloadCSV(filename, columns, rows) {
 }
 
 export const fechaCSV = (fecha) => {
+  if (fecha == null || fecha === '') return ''
   const d = new Date(fecha)
   if (Number.isNaN(d.getTime())) return fecha || ''
   return d.toLocaleString('es-CO')

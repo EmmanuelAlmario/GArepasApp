@@ -29,17 +29,19 @@ public class ConfiguracionValidador implements CommandLineRunner {
     @Override
     public void run(String... args) {
         boolean jwtDefault = JWT_DEFAULT.equals(jwtSecret) || jwtSecret == null || jwtSecret.isBlank();
+        boolean jwtCorto = jwtSecret != null && !jwtSecret.isBlank() && jwtSecret.trim().getBytes(java.nio.charset.StandardCharsets.UTF_8).length < 32;
         boolean adminDefault = ADMIN_DEFAULT.equals(adminPassword) || adminPassword == null || adminPassword.isBlank();
 
         if (!estricto) {
-            if (jwtDefault || adminDefault) {
-                log.warn("SECURIDAD: se están usando valores por defecto (JWT/ADMIN). "
-                        + "Define JWT_SECRET y ADMIN_PASSWORD. Para bloquear el arranque usa STRICT_SECRETS=true.");
+            if (jwtDefault || adminDefault || jwtCorto) {
+                log.warn("SECURIDAD: se están usando valores por defecto o un JWT_SECRET corto. "
+                        + "Define JWT_SECRET (≥32 caracteres) y ADMIN_PASSWORD. "
+                        + "Para bloquear el arranque usa STRICT_SECRETS=true.");
             }
             return;
         }
 
-        if (jwtDefault || adminDefault) {
+        if (jwtDefault || adminDefault || jwtCorto) {
             throw new IllegalStateException(
                     "FALLO DE SEGURIDAD: no se definieron secretos propios. "
                             + "Configura las variables JWT_SECRET (≥32 caracteres) y ADMIN_PASSWORD "

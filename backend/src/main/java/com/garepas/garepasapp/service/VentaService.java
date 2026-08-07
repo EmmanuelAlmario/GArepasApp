@@ -39,7 +39,16 @@ public class VentaService {
 
     @Transactional(readOnly = true)
     public Page<VentaResponse> listarPaginado(Pageable pageable) {
-        return ventaRepository.findAllBy(pageable).map(VentaResponse::desde);
+        Page<Venta> page = ventaRepository.findAllBy(pageable);
+        java.util.List<Long> ids = page.getContent().stream().map(Venta::getId).toList();
+        if (!ids.isEmpty()) {
+            java.util.Map<Long, List<DetalleVenta>> detallesPorVenta =
+                    ventaRepository.findDetallesPorVentaIds(ids).stream()
+                            .collect(java.util.stream.Collectors.groupingBy(d -> d.getVenta().getId()));
+            page.getContent().forEach(v -> v.setDetalles(
+                    detallesPorVenta.getOrDefault(v.getId(), java.util.List.of())));
+        }
+        return page.map(VentaResponse::desde);
     }
 
     @Transactional(readOnly = true)
